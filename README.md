@@ -4,7 +4,7 @@ A comprehensive Cisco SD-Access (SDA) fabric lab built on Cisco CML, featuring f
 
 ## Live Documentation
 
-**[View Full Lab Documentation](https://enizaksoy.github.io/SDA-Lab-CML/SDA_Lab_Documentation.html)**
+**[View Full Lab Documentation](https://enizaksoy.github.io/Cisco-SD-Access-Lab-with-SXP-Integration/SDA_Lab_Documentation.html)**
 
 ## Lab Overview
 
@@ -21,21 +21,69 @@ A comprehensive Cisco SD-Access (SDA) fabric lab built on Cisco CML, featuring f
 - **Underlay**: IS-IS (pushed by Catalyst Center)
 - **Overlay**: LISP (Control Plane) + VXLAN (Data Plane)
 - **Segmentation**: VRF-based (Corp_VN) + SGT micro-segmentation via CTS/TrustSec
-- **AAA**: RADIUS (802.1X) with ISE, Open Authentication template
+- **AAA**: RADIUS (802.1X) with ISE, Closed Authentication template
 - **External Routing**: OSPF Area 0 on Border Gi1/0/2 for ISE reachability from Loopback0
 
 ### What's Implemented
 1. Full SD-Access fabric deployment via Catalyst Center
 2. IS-IS underlay, LISP overlay, VXLAN data plane
-3. Virtual Network (Corp_VN) with IP pools and Anycast Gateways
+3. Virtual Network (Corp_VN) with 4 IP pools and Anycast Gateways
 4. ISE integration - CTS environment, 16 SGTs downloaded
-5. 802.1X Open Authentication on all edge ports
+5. 802.1X Closed Authentication on Edge ports (Gi1/0/5-10)
 6. OSPF external routing (Border to management network)
 7. AAA/RADIUS pushed by Catalyst Center
 8. ISE internal users (netadmin + User_1 through User_10)
+9. **ISE Identity Groups** (Employees, Contractors, Guests)
+10. **ISE Authorization Profiles** with dynamic VLAN + SGT per group
+11. **ISE Authorization Policies** (SDA_Employees, SDA_Contractors, SDA_Guests)
+12. **DHCP pools** on Edge switches with split ranges to prevent duplicate IPs
+13. **SXP** - ISE as Speaker, all fabric switches as Listeners (7 static + dynamic bindings)
+14. **Dynamic SXP propagation** - RADIUS accounting IP-SGT bindings to all listeners
+15. **CTS role-based enforcement** on overlay VLANs 1021-1024
+
+### IP Pools & VLANs
+
+| Pool | VLAN | Subnet | Gateway | Group | SGT |
+|---|---|---|---|---|---|
+| Corp_Pool | 1021 | 10.10.20.0/24 | 10.10.20.1 | Default | - |
+| Employees_Pool | 1022 | 10.10.21.0/24 | 10.10.21.1 | Employees | 4 |
+| Contractors_Pool | 1023 | 10.10.22.0/24 | 10.10.22.1 | Contractors | 5 |
+| Guests_Pool | 1024 | 10.10.23.0/24 | 10.10.23.1 | Guests | 6 |
 
 ### Goal
-Test **IP-SGT propagation via SXP** from SD-Access fabric to external devices (Versa FlexVNF + Cisco router), demonstrating TrustSec SGT propagation beyond the fabric boundary.
+Test **IP-SGT propagation via SXP** from SD-Access fabric to external devices (Cisco CSR router + Versa FlexVNF), demonstrating TrustSec SGT propagation beyond the fabric boundary with SGT-based ACLs.
+
+## Lab Topology
+
+```
+                    Catalyst Center (192.168.11.254)
+                              |
+                    ISE 3.5 (192.168.11.250)
+                    [SXP Speaker + RADIUS AAA]
+                              |
+                    3750X Mgmt Switch (192.168.244.4)
+                              |
+            +-----------------+-----------------+
+            |                 |                 |
+     SDA-Border (.11)   SDA-CP (.12)      Edge Switches
+     [Border Node]      [Control Plane]    [Edge Nodes]
+     SXP Listener       SXP Listener       SXP Listeners
+     OSPF ↔ IS-IS       MS/MR              802.1X ports
+            |                               |         |
+            |                          SDA-Edge1    SDA-Edge2
+            |                          (.13)        (.14)
+            |                          Gi1/0/5-10   Gi1/0/5-10
+     Gi1/0/2 → OSPF Area 0            dot1x+MAB    dot1x+MAB
+     (ISE reachability)                DHCP .2-127  DHCP .128-254
+            |
+     [Future: SXP Speaker]
+            |
+     +------+------+
+     |             |
+  Cisco CSR     Versa FlexVNF
+  SXP Listener  SXP Listener
+  SGACL         SGT Policy
+```
 
 ## Repository Contents
 
@@ -47,39 +95,25 @@ Test **IP-SGT propagation via SXP** from SD-Access fabric to external devices (V
 | `sda_topology.yaml` | CML topology definition |
 | `create_sda_topology.py` | CML topology creation script |
 
-## Lab Topology
+## Progress: 93% (50/54 tasks)
 
-```
-                    Catalyst Center (192.168.11.254)
-                              |
-                    ISE 3.5 (192.168.11.250)
-                              |
-                    3750X Mgmt Switch (192.168.244.4)
-                              |
-            +-----------------+-----------------+
-            |                 |                 |
-     SDA-Border (.11)   SDA-CP (.12)      Edge Switches
-     [Border Node]      [Control Plane]    [Edge Nodes]
-     OSPF ↔ IS-IS       MS/MR              802.1X ports
-            |                               |         |
-            |                          SDA-Edge1    SDA-Edge2
-            |                          (.13)        (.14)
-     Gi1/0/2 → OSPF Area 0
-     (ISE reachability)
-```
+### Completed
+- Full fabric deployment (IS-IS, LISP, VXLAN, VRF)
+- ISE integration with CTS/TrustSec (16 SGTs)
+- SXP with static + dynamic IP-SGT mappings
+- 802.1X Closed Authentication with dynamic VLAN + SGT assignment
+- DHCP pools with split ranges across Edge switches
+- ISE authorization profiles and policies per user group
 
-## Technologies Verified
-
-- IS-IS adjacencies between all fabric nodes
-- LISP sessions (TCP/4342) - CP ↔ Border, CP ↔ Edge1, CP ↔ Edge2
-- VXLAN NVE peers with VNI mappings
-- CTS environment data (16 SGTs from ISE)
-- RADIUS authentication (ISE as AAA server)
-- Anycast Gateway (Vlan1021 - 172.16.100.1/24)
+### Remaining
+- Add Cisco CSR router to CML (external to fabric)
+- Configure Border as SXP Speaker to CSR
+- SGT-based ACLs (SGACL) on CSR
+- Versa FlexVNF integration for end-to-end SGT propagation
 
 ## Tools Used
 - **Cisco CML 2.9.1** (Bare Metal - Lenovo P920)
 - **Catalyst Center 2.3.7.x**
 - **ISE 3.5**
 - **Python + Netmiko** for automation scripts
-- **Cat Center REST API** for verification
+- **Cat Center REST API** & **ISE ERS/Open API** for configuration
