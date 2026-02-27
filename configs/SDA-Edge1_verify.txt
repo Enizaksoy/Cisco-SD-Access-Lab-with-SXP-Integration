@@ -1,0 +1,368 @@
+
+=== show isis neighbors ===
+
+System Id       Type Interface     IP Address      State Holdtime Circuit Id
+SDA-CP          L2   Gi1/0/1       10.1.1.1        UP    23       SDA-Edge1.01       
+SDA-Border      L2   Gi1/0/1       10.1.1.2        UP    24       SDA-Edge1.01       
+SDA-Edge2       L2   Gi1/0/1       10.1.1.4        UP    26       SDA-Edge1.01       
+
+=== show lisp session ===
+
+Sessions for VRF default, total: 1, established: 1
+Peer            State      Up/Down        In/Out    Users
+10.1.0.1:4342   Up         01:23:52       10/5      5
+
+=== show lisp instance-id 4099 ipv4 server summary ===
+                     -----------  IPv4 ----------- 
+ Site name            Configured Registered Incons
+
+Site-registration limit for router lisp 0:              0
+Site-registration count for router lisp 0:              0
+Number of configured sites:                             0
+Number of registered sites:                             0
+Sites with inconsistent registrations:                  0
+IPv4
+  Number of configured EID prefixes:                    0
+  Number of registered EID prefixes:                    0
+  Instance-Service site-registration limit:             0
+  Registration-history size/limit:                      0/1000
+
+=== show nve peers ===
+'M' - MAC entry download flag  'A' - Adjacency download flag
+'4' - IPv4 flag  '6' - IPv6 flag
+
+Interface  VNI      Type Peer-IP          RMAC/Num_RTs   eVNI     state flags UP time
+
+=== show nve vni ===
+Interface  VNI        Multicast-group  VNI state  Mode  VLAN  cfg vrf                      
+
+=== show vrf ===
+  Name                             Default RD            Protocols   Interfaces
+  Corp_VN                          <not set>             ipv4        Vl1021
+                                                                     LI0.4099
+  Mgmt-vrf                         <not set>             ipv4,ipv6   Gi0/0
+
+=== show ip interface brief ===
+Interface              IP-Address      OK? Method Status                Protocol
+Vlan1                  unassigned      YES unset  administratively down down    
+Vlan1021               10.10.20.1      YES manual up                    down    
+GigabitEthernet0/0     192.168.244.13  YES manual up                    up      
+GigabitEthernet1/0/1   10.1.1.3        YES manual up                    up      
+GigabitEthernet1/0/2   unassigned      YES unset  up                    up      
+GigabitEthernet1/0/3   unassigned      YES unset  up                    up      
+GigabitEthernet1/0/4   unassigned      YES unset  up                    up      
+GigabitEthernet1/0/5   unassigned      YES unset  up                    up      
+GigabitEthernet1/0/6   unassigned      YES unset  up                    up      
+GigabitEthernet1/0/7   unassigned      YES unset  up                    up      
+GigabitEthernet1/0/8   unassigned      YES unset  up                    up      
+GigabitEthernet1/0/9   unassigned      YES unset  up                    up      
+GigabitEthernet1/0/10  unassigned      YES unset  up                    up      
+GigabitEthernet1/0/11  unassigned      YES unset  up                    up      
+GigabitEthernet1/0/12  unassigned      YES unset  up                    up      
+GigabitEthernet1/0/13  unassigned      YES unset  up                    up      
+GigabitEthernet1/0/14  unassigned      YES unset  up                    up      
+GigabitEthernet1/0/15  unassigned      YES unset  up                    up      
+GigabitEthernet1/0/16  unassigned      YES unset  up                    up      
+GigabitEthernet1/0/17  unassigned      YES unset  up                    up      
+GigabitEthernet1/0/18  unassigned      YES unset  up                    up      
+GigabitEthernet1/0/19  unassigned      YES unset  up                    up      
+GigabitEthernet1/0/20  unassigned      YES unset  up                    up      
+GigabitEthernet1/0/21  unassigned      YES unset  up                    up      
+GigabitEthernet1/0/22  unassigned      YES unset  up                    up      
+GigabitEthernet1/0/23  unassigned      YES unset  up                    up      
+GigabitEthernet1/0/24  unassigned      YES unset  up                    up      
+L2LISP0                10.1.0.3        YES unset  up                    up      
+L2LISP0.8188           10.1.0.3        YES unset  up                    up      
+LISP0                  unassigned      YES unset  up                    up      
+LISP0.4099             unassigned      NO  unset  up                    up      
+Loopback0              10.1.0.3        YES manual up                    up      
+
+=== show ip route isis ===
+Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area 
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, m - OMP
+       n - NAT, Ni - NAT inside, No - NAT outside, Nd - NAT DIA
+       i - IS-IS, su - IS-IS summary, L1 - IS-IS level-1, L2 - IS-IS level-2
+       ia - IS-IS inter area, * - candidate default, U - per-user static route
+       H - NHRP, G - NHRP registered, g - NHRP registration summary
+       o - ODR, P - periodic downloaded static route, l - LISP
+       a - application route
+       + - replicated route, % - next hop override, p - overrides from PfR
+       & - replicated local route overrides by connected
+
+Gateway of last resort is 192.168.244.4 to network 0.0.0.0
+
+      1.0.0.0/32 is subnetted, 2 subnets
+i L2     1.1.1.1 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2     1.1.1.2 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+      10.0.0.0/8 is variably subnetted, 7 subnets, 2 masks
+i L2     10.1.0.1/32 [115/10] via 10.1.1.1, 01:38:54, GigabitEthernet1/0/1
+i L2     10.1.0.2/32 [115/10] via 10.1.1.2, 01:38:51, GigabitEthernet1/0/1
+i L2     10.1.0.4/32 [115/10] via 10.1.1.4, 01:38:51, GigabitEthernet1/0/1
+i L2     10.220.0.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.1.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.10.0/23 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.12.0/23 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.20.0/23 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.20.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.30.0/23 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.30.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.40.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.48.0/22 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.100.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.101.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.102.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.103.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.104.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.105.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.106.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.110.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.111.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.112.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.113.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.114.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.115.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.116.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.117.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.118.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.119.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.120.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.130.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.140.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.200.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.240.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.241.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.242.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.243.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.244.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.245.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.246.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.247.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.248.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.249.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.250.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.251.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.252.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.253.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+i L2  192.168.254.0/24 [115/10] via 10.1.1.2, 00:29:19, GigabitEthernet1/0/1
+
+=== show ip route ospf ===
+
+
+=== show ip ospf neighbor ===
+
+
+=== show run | section aaa ===
+aaa new-model
+aaa group server radius dnac-network-radius-group
+ server name dnac-radius_192.168.11.250
+ ip radius source-interface Loopback0
+aaa group server radius dnac-client-radius-group
+ server name dnac-radius_192.168.11.250
+ ip radius source-interface Loopback0
+aaa authentication login default local
+aaa authentication login VTY_authen group dnac-network-radius-group local
+aaa authentication login dnac-cts-list group dnac-client-radius-group local
+aaa authentication dot1x default group dnac-client-radius-group
+aaa authorization exec default local 
+aaa authorization exec VTY_author group dnac-network-radius-group local if-authenticated 
+aaa authorization network default group dnac-client-radius-group 
+aaa authorization network dnac-cts-list group dnac-client-radius-group 
+aaa accounting update newinfo periodic 2880
+aaa accounting identity default start-stop group dnac-client-radius-group
+aaa accounting exec default start-stop group dnac-network-radius-group
+aaa server radius dynamic-author
+ client 192.168.11.250 server-key 7 046D0E141C201D1C5A
+aaa session-id common
+ match result-type aaa-timeout
+ match result-type aaa-timeout
+ event aaa-available match-all
+  10 class IN_CRITICAL_AUTH_CLOSED_MODE do-until-failure
+   10 clear-session
+  20 class NOT_IN_CRITICAL_AUTH_CLOSED_MODE do-until-failure
+   10 resume reauthentication
+ event aaa-available match-all
+  10 class IN_CRITICAL_AUTH_CLOSED_MODE do-until-failure
+   10 clear-session
+  20 class NOT_IN_CRITICAL_AUTH_CLOSED_MODE do-until-failure
+   10 resume reauthentication
+ event aaa-available match-all
+  10 class IN_CRITICAL_AUTH do-until-failure
+   10 clear-session
+  20 class NOT_IN_CRITICAL_AUTH do-until-failure
+   10 resume reauthentication
+ event aaa-available match-all
+  10 class IN_CRITICAL_AUTH do-until-failure
+   10 clear-session
+  20 class NOT_IN_CRITICAL_AUTH do-until-failure
+   10 resume reauthentication
+ event aaa-available match-all
+  10 class IN_CRITICAL_AUTH do-until-failure
+   10 clear-session
+  20 class NOT_IN_CRITICAL_AUTH do-until-failure
+   10 resume reauthentication
+ event aaa-available match-all
+  10 class IN_CRITICAL_AUTH do-until-failure
+   10 clear-session
+  20 class NOT_IN_CRITICAL_AUTH do-until-failure
+   10 resume reauthentication
+snmp-server enable traps aaa_server
+
+=== show run | section tacacs ===
+
+
+=== show run | section radius ===
+aaa group server radius dnac-network-radius-group
+ server name dnac-radius_192.168.11.250
+ ip radius source-interface Loopback0
+aaa group server radius dnac-client-radius-group
+ server name dnac-radius_192.168.11.250
+ ip radius source-interface Loopback0
+aaa authentication login VTY_authen group dnac-network-radius-group local
+aaa authentication login dnac-cts-list group dnac-client-radius-group local
+aaa authentication dot1x default group dnac-client-radius-group
+aaa authorization exec VTY_author group dnac-network-radius-group local if-authenticated 
+aaa authorization network default group dnac-client-radius-group 
+aaa authorization network dnac-cts-list group dnac-client-radius-group 
+aaa accounting identity default start-stop group dnac-client-radius-group
+aaa accounting exec default start-stop group dnac-network-radius-group
+aaa server radius dynamic-author
+ client 192.168.11.250 server-key 7 046D0E141C201D1C5A
+ip radius source-interface Loopback0 
+radius-server attribute 6 on-for-login-auth
+radius-server attribute 6 support-multiple
+radius-server attribute 8 include-in-access-req
+radius-server attribute 25 access-request include
+radius-server attribute 31 mac format ietf upper-case
+radius-server attribute 31 send nas-port-detail mac-only
+radius-server dead-criteria time 5 tries 3
+radius-server deadtime 3
+radius server dnac-radius_192.168.11.250
+ address ipv4 192.168.11.250 auth-port 1812 acct-port 1813
+ timeout 4
+ retransmit 3
+ automate-tester username dummy ignore-acct-port probe-on
+ pac key 7 0230014918075E731F
+
+=== show cts environment-data ===
+CTS Environment Data
+====================
+Current state = COMPLETE
+Last status = Successful
+Service Info Table:
+Local Device SGT:
+  SGT tag = 2-00:TrustSec_Devices
+Server List Info:
+Installed list: CTSServerList1-0001, 1 server(s):
+ *Server: 192.168.11.250, port 1812, A-ID ABD65075CAFB435A3376DB585905851A
+          Status = ALIVE
+          auto-test = TRUE, keywrap-enable = FALSE, idle-time = 60 mins, deadtime = 20 secs
+Security Group Name Table:
+    0-00:Unknown
+    2-00:TrustSec_Devices
+    3-00:Network_Services
+    4-00:Employees
+    5-00:Contractors
+    6-00:Guests
+    7-00:Production_Users
+    8-00:Developers
+    9-00:Auditors
+    10-00:Point_of_Sale_Systems
+    11-00:Production_Servers
+    12-00:Development_Servers
+    13-00:Test_Servers
+    14-00:PCI_Servers
+    15-00:BYOD
+    255-00:Quarantined_Systems
+Environment Data Lifetime = 86400 secs 
+Last update time = 09:40:16 UTC Fri Feb 27 2026
+Env-data expires in   0:23:31:27 (dd:hr:mm:sec)
+Env-data refreshes in 0:23:31:27 (dd:hr:mm:sec)
+Cache data applied           = NONE
+State Machine is running
+Retry_timer (60 secs) is not running
+
+=== show cts sxp connections ===
+ SXP              : Disabled
+ Highest Version Supported: 5
+ Default Password : Not Set
+ Default Key-Chain: Not Set
+ Default Key-Chain Name: Not Applicable
+ Default Source IP: Not Set
+Connection retry open period: 120 secs
+Reconcile period: 120 secs
+Retry open timer is not running
+Peer-Sequence traverse limit for export: Not Set
+Peer-Sequence traverse limit for import: Not Set
+
+There are no SXP Connections.
+
+
+=== show run | section router isis ===
+ ip router isis 
+router isis
+ net 49.0001.0101.0003.00
+ is-type level-2-only
+ metric-style wide
+ passive-interface Loopback0
+
+=== show run | section router ospf ===
+
+
+=== show run | section router lisp ===
+router lisp
+ domain-id 4218702598
+ locator-table default
+ locator-set rloc_c400894d-e932-4326-8b81-021afa7164ab
+  IPv4-interface Loopback0 priority 10 weight 10
+  exit-locator-set
+ !
+ locator default-set rloc_c400894d-e932-4326-8b81-021afa7164ab
+ service ipv4
+  encapsulation vxlan
+  itr map-resolver 10.1.0.1
+  etr map-server 10.1.0.1 key 7 045A58530E251E1D0D1C5411405F55552C
+  etr map-server 10.1.0.1 proxy-reply
+  etr
+  sgt
+  no map-cache away-eids send-map-request
+  proxy-itr 10.1.0.3
+  exit-service-ipv4
+ !
+ service ethernet
+  itr map-resolver 10.1.0.1
+  itr
+  etr map-server 10.1.0.1 key 7 130444470A0856792F21793567764A5610
+  etr map-server 10.1.0.1 proxy-reply
+  etr
+  exit-service-ethernet
+ !
+ instance-id 4099
+  remote-rloc-probe on-route-change
+  dynamic-eid Corp_VLAN-IPV4
+   database-mapping 10.10.20.0/24 locator-set rloc_c400894d-e932-4326-8b81-021afa7164ab
+   exit-dynamic-eid
+  !
+  service ipv4
+   eid-table vrf Corp_VN
+   map-cache 0.0.0.0/0 map-request
+   exit-service-ipv4
+  !
+  exit-instance-id
+ !
+ instance-id 8188
+  remote-rloc-probe on-route-change
+  service ethernet
+   eid-table vlan 1021
+   broadcast-underlay 239.0.17.1
+   flood arp-nd
+   flood unknown-unicast
+   database-mapping mac locator-set rloc_c400894d-e932-4326-8b81-021afa7164ab
+   exit-service-ethernet
+  !
+  exit-instance-id
+ !
+ ipv4 locator reachability minimum-mask-length 32
+ ipv4 source-locator Loopback0
+ exit-router-lisp

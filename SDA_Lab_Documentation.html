@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SD-Access Lab Documentation</title>
+<style>
+:root {
+    --bg-dark: #1a1a2e;
+    --bg-card: #16213e;
+    --bg-code: #0f0f23;
+    --accent-blue: #4fc3f7;
+    --accent-green: #66bb6a;
+    --accent-orange: #ff9800;
+    --accent-red: #ef5350;
+    --accent-purple: #ce93d8;
+    --accent-cyan: #26c6da;
+    --text-primary: #e0e0e0;
+    --text-secondary: #9e9e9e;
+    --border: #2a2a4a;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 280px;
+    background: #111126;
+    border-right: 1px solid var(--border);
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    overflow-y: auto;
+    z-index: 100;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.sidebar-header h1 {
+    font-size: 1.1em;
+    color: var(--accent-blue);
+    margin-bottom: 4px;
+}
+
+.sidebar-header .subtitle {
+    font-size: 0.75em;
+    color: var(--text-secondary);
+}
+
+.nav-section { padding: 8px 0; }
+
+.nav-label {
+    padding: 8px 20px 4px;
+    font-size: 0.65em;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-secondary);
+}
+
+.nav-item {
+    display: block;
+    padding: 8px 20px 8px 24px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.nav-item:hover {
+    color: var(--text-primary);
+    background: rgba(79, 195, 247, 0.05);
+}
+
+.nav-item.active {
+    color: var(--accent-blue);
+    border-left-color: var(--accent-blue);
+    background: rgba(79, 195, 247, 0.08);
+}
+
+/* Main Content */
+.main {
+    margin-left: 280px;
+    flex: 1;
+    padding: 32px 40px;
+    max-width: 1100px;
+}
+
+.section { display: none; animation: fadeIn 0.25s ease-in; }
+.section.active { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+h2 {
+    font-size: 1.5em;
+    color: var(--accent-orange);
+    margin-bottom: 20px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+}
+
+h3 {
+    font-size: 1.15em;
+    color: var(--accent-green);
+    margin: 20px 0 12px;
+}
+
+h4 {
+    font-size: 1em;
+    color: var(--accent-purple);
+    margin: 16px 0 8px;
+}
+
+p { margin-bottom: 12px; line-height: 1.6; }
+
+/* Cards */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 25px;
+    margin-bottom: 16px;
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+/* Status Cards */
+.status-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    text-align: center;
+}
+
+.status-card .value {
+    font-size: 2em;
+    font-weight: bold;
+    margin: 8px 0 4px;
+}
+
+.status-card .label {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+}
+
+.status-card.green .value { color: var(--accent-green); }
+.status-card.blue .value { color: var(--accent-blue); }
+.status-card.orange .value { color: var(--accent-orange); }
+.status-card.purple .value { color: var(--accent-purple); }
+.status-card.cyan .value { color: var(--accent-cyan); }
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 0.9em;
+}
+
+th {
+    background: #1a237e;
+    color: var(--accent-blue);
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+tr:hover { background: rgba(79, 195, 247, 0.05); }
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: bold;
+}
+
+.badge-blue { background: rgba(79, 195, 247, 0.2); color: var(--accent-blue); }
+.badge-green { background: rgba(102, 187, 106, 0.2); color: var(--accent-green); }
+.badge-orange { background: rgba(255, 152, 0, 0.2); color: var(--accent-orange); }
+.badge-red { background: rgba(239, 83, 80, 0.2); color: var(--accent-red); }
+.badge-purple { background: rgba(206, 147, 216, 0.2); color: var(--accent-purple); }
+.badge-cyan { background: rgba(38, 198, 218, 0.2); color: var(--accent-cyan); }
+
+/* Code */
+code {
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    background: rgba(255,255,255,0.06);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.88em;
+}
+
+pre {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.82em;
+    line-height: 1.5;
+}
+
+/* Config block label */
+.config-label {
+    display: inline-block;
+    background: var(--accent-blue);
+    color: #111;
+    padding: 2px 10px;
+    border-radius: 4px 4px 0 0;
+    font-size: 0.75em;
+    font-weight: bold;
+    margin-bottom: -1px;
+}
+
+/* Topology */
+.topo-container {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 30px;
+    margin-bottom: 20px;
+    text-align: center;
+    overflow-x: auto;
+}
+
+.topo-row {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 12px 0;
+    flex-wrap: wrap;
+}
+
+.topo-box {
+    border-radius: 8px;
+    padding: 10px 16px;
+    min-width: 140px;
+    font-size: 0.85em;
+    text-align: center;
+}
+
+.topo-box.mgmt { border: 2px solid var(--accent-orange); background: rgba(255, 152, 0, 0.08); }
+.topo-box.cp { border: 2px solid var(--accent-purple); background: rgba(206, 147, 216, 0.08); }
+.topo-box.border-node { border: 2px solid var(--accent-blue); background: rgba(79, 195, 247, 0.08); }
+.topo-box.edge { border: 2px solid var(--accent-green); background: rgba(102, 187, 106, 0.08); }
+.topo-box.switch { border: 2px solid var(--text-secondary); background: rgba(255, 255, 255, 0.03); }
+.topo-box .role { font-size: 0.7em; color: var(--text-secondary); margin-top: 2px; }
+.topo-connector { color: var(--text-secondary); font-size: 1.2em; margin: 4px 0; }
+
+/* Timeline */
+.timeline { margin: 16px 0; padding-left: 24px; border-left: 2px solid var(--border); }
+
+.timeline-item {
+    position: relative;
+    padding: 8px 0 8px 20px;
+    font-size: 0.9em;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -29px;
+    top: 12px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+    border: 2px solid var(--bg-dark);
+}
+
+.timeline-item.done::before { background: var(--accent-green); }
+.timeline-item.pending::before { background: var(--accent-orange); }
+
+/* Progress Bar */
+.progress-bar {
+    background: var(--border);
+    border-radius: 8px;
+    height: 8px;
+    margin: 8px 0 16px;
+    overflow: hidden;
+}
+
+.progress-bar .fill {
+    height: 100%;
+    border-radius: 8px;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+}
+
+/* Hamburger */
+.hamburger {
+    display: none;
+    position: fixed;
+    top: 12px; left: 12px;
+    z-index: 200;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 1.2em;
+}
+
+@media (max-width: 900px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; padding: 20px 16px; padding-top: 56px; }
+    .hamburger { display: block; }
+    .card-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<button class="hamburger" onclick="document.querySelector('.sidebar').classList.toggle('open')">&#9776;</button>
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h1>SD-Access Lab</h1>
+        <div class="subtitle">Cisco Catalyst Center + ISE + CML</div>
+    </div>
+    <div class="nav-section">
+        <div class="nav-label">Overview</div>
+        <a class="nav-item active" data-section="overview">Overview</a>
+        <a class="nav-item" data-section="topology">Topology</a>
+    </div>
+    <div class="nav-section">
+        <div class="nav-label">Infrastructure</div>
+        <a class="nav-item" data-section="devices">Devices & Credentials</a>
+        <a class="nav-item" data-section="underlay">IS-IS Underlay</a>
+        <a class="nav-item" data-section="ospf">OSPF External Routing</a>
+        <a class="nav-item" data-section="overlay">LISP / VXLAN Overlay</a>
+        <a class="nav-item" data-section="vn">Virtual Networks</a>
+    </div>
+    <div class="nav-section">
+        <div class="nav-label">Security</div>
+        <a class="nav-item" data-section="aaa">AAA / RADIUS / 802.1X</a>
+        <a class="nav-item" data-section="ise">ISE Integration</a>
+        <a class="nav-item" data-section="sxp">SXP / SGT</a>
+    </div>
+    <div class="nav-section">
+        <div class="nav-label">Operations</div>
+        <a class="nav-item" data-section="catcenter">Catalyst Center</a>
+        <a class="nav-item" data-section="scripts">Scripts & Tools</a>
+        <a class="nav-item" data-section="progress">Progress Tracker</a>
+    </div>
+</nav>
+
+<main class="main">
+
+<!-- OVERVIEW -->
+<div class="section active" id="overview">
+    <h2>Lab Overview</h2>
+    <p>SD-Access fabric lab using Cisco Catalyst Center for automation, ISE 3.5 for policy, and Cat9Kv UADP switches running in CML. Built to test <strong>IP-SGT propagation via SXP</strong> from SD-Access to Versa FlexVNF.</p>
+
+    <div class="card-grid">
+        <div class="status-card green">
+            <div class="label">Fabric Nodes</div>
+            <div class="value">4</div>
+            <div class="label">Cat9Kv UADP</div>
+        </div>
+        <div class="status-card blue">
+            <div class="label">LISP Sessions</div>
+            <div class="value">3/3</div>
+            <div class="label">All Established</div>
+        </div>
+        <div class="status-card green">
+            <div class="label">IS-IS Adjacencies</div>
+            <div class="value">12</div>
+            <div class="label">All UP (L2)</div>
+        </div>
+        <div class="status-card purple">
+            <div class="label">CTS Environment</div>
+            <div class="value" style="font-size:1.4em">COMPLETE</div>
+            <div class="label">16 SGTs Loaded</div>
+        </div>
+        <div class="status-card cyan">
+            <div class="label">Auth Template</div>
+            <div class="value" style="font-size:1.2em">Open Auth</div>
+            <div class="label">802.1X Enabled</div>
+        </div>
+    </div>
+
+    <h3>Lab Objective</h3>
+    <div class="card">
+        <p><strong>Primary Goal:</strong> Test IP-SGT propagation via SXP from SD-Access fabric to Versa FlexVNF.</p>
+        <p>1. SD-Access assigns SGTs to endpoints via ISE<br>
+           2. Border exports IP-SGT mappings via SXP to external Cisco router<br>
+           3. Versa FlexVNF receives SGT-IP bindings via SXP for SGT-based policy enforcement</p>
+    </div>
+
+    <h3>Architecture Summary</h3>
+    <div class="card">
+        <table>
+            <tr><th>Layer</th><th>Protocol</th><th>Status</th></tr>
+            <tr><td>Underlay</td><td>IS-IS Level-2, metric-style wide</td><td><span class="badge badge-green">OPERATIONAL</span></td></tr>
+            <tr><td>Control Plane</td><td>LISP Pub/Sub (Map-Server on CP)</td><td><span class="badge badge-green">OPERATIONAL</span></td></tr>
+            <tr><td>Data Plane</td><td>VXLAN (VNI via NVE)</td><td><span class="badge badge-orange">WAITING HOSTS</span></td></tr>
+            <tr><td>Policy</td><td>ISE 3.5 + pxGrid + TrustSec</td><td><span class="badge badge-green">ACTIVE</span></td></tr>
+            <tr><td>AAA/RADIUS</td><td>RADIUS via ISE, dot1x enabled</td><td><span class="badge badge-green">CONFIGURED</span></td></tr>
+            <tr><td>External Routing</td><td>OSPF Area 0 (Border &harr; 3750X)</td><td><span class="badge badge-green">OPERATIONAL</span></td></tr>
+            <tr><td>SXP</td><td>SXP to external devices</td><td><span class="badge badge-orange">PLANNED</span></td></tr>
+        </table>
+    </div>
+</div>
+
+<!-- TOPOLOGY -->
+<div class="section" id="topology">
+    <h2>Network Topology</h2>
+
+    <div class="topo-container">
+        <div class="topo-row">
+            <div class="topo-box mgmt">
+                <strong>Catalyst Center</strong>
+                <div class="role">192.168.11.254</div>
+            </div>
+            <div class="topo-box mgmt">
+                <strong>ISE 3.5</strong>
+                <div class="role">192.168.11.250</div>
+            </div>
+        </div>
+        <div class="topo-connector">|</div>
+        <div class="topo-row">
+            <div class="topo-box switch">
+                <strong>3750X Mgmt Switch</strong>
+                <div class="role">VLAN 244 &mdash; GW 192.168.244.4 &mdash; OSPF Area 0</div>
+            </div>
+        </div>
+        <div class="topo-connector">|</div>
+        <div class="topo-row">
+            <div class="topo-box switch">
+                <strong>Mgmt-Switch (CML L2)</strong>
+                <div class="role">Gi0/0 Management + Border Gi1/0/2 (OSPF)</div>
+            </div>
+        </div>
+        <div class="topo-connector">|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</div>
+        <div class="topo-row">
+            <div class="topo-box border-node">
+                <strong>SDA-Border</strong>
+                <div class="role">Border + OSPF External</div>
+                <div class="role">.11 / Lo0: 10.1.0.2 / Gi1/0/2: .15</div>
+            </div>
+            <div class="topo-box cp">
+                <strong>SDA-CP</strong>
+                <div class="role">Control Plane</div>
+                <div class="role">.12 / Lo0: 10.1.0.1</div>
+            </div>
+            <div class="topo-box edge">
+                <strong>SDA-Edge1</strong>
+                <div class="role">Edge Node (Zone)</div>
+                <div class="role">.13 / Lo0: 10.1.0.3</div>
+            </div>
+            <div class="topo-box edge">
+                <strong>SDA-Edge2</strong>
+                <div class="role">Edge Node (Zone)</div>
+                <div class="role">.14 / Lo0: 10.1.0.4</div>
+            </div>
+        </div>
+        <div class="topo-connector">|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</div>
+        <div class="topo-row">
+            <div class="topo-box switch">
+                <strong>Fabric-Switch (CML L2)</strong>
+                <div class="role">Gi1/0/1 Fabric Underlay &mdash; IS-IS + LISP + VXLAN</div>
+            </div>
+        </div>
+    </div>
+
+    <h3>SD-Access Roles</h3>
+    <table>
+        <tr><th>Node</th><th>Role</th><th>Function</th><th>LISP Role</th></tr>
+        <tr>
+            <td><span class="badge badge-purple">SDA-CP</span></td>
+            <td>Control Plane</td>
+            <td>LISP Map-Server / Map-Resolver</td>
+            <td>MS/MR</td>
+        </tr>
+        <tr>
+            <td><span class="badge badge-blue">SDA-Border</span></td>
+            <td>Border</td>
+            <td>External handoff, L3 Handoff (BGP AS 65001), OSPF to 3750X</td>
+            <td>Proxy xTR</td>
+        </tr>
+        <tr>
+            <td><span class="badge badge-green">SDA-Edge1</span></td>
+            <td>Edge (Zone)</td>
+            <td>Host-facing, anycast gateway 10.10.20.1</td>
+            <td>xTR / VTEP</td>
+        </tr>
+        <tr>
+            <td><span class="badge badge-green">SDA-Edge2</span></td>
+            <td>Edge (Zone)</td>
+            <td>Host-facing, anycast gateway 10.10.20.1</td>
+            <td>xTR / VTEP</td>
+        </tr>
+    </table>
+</div>
+
+<!-- DEVICES -->
+<div class="section" id="devices">
+    <h2>Devices & Credentials</h2>
+
+    <h3>Cat9Kv UADP Switches (IOS-XE 17.15)</h3>
+    <table>
+        <tr><th>Node</th><th>Mgmt IP</th><th>Loopback0</th><th>Fabric IP</th><th>Serial</th></tr>
+        <tr><td><span class="badge badge-blue">SDA-Border</span></td><td>192.168.244.11</td><td>10.1.0.2</td><td>10.1.1.2</td><td>CMLUADP001</td></tr>
+        <tr><td><span class="badge badge-purple">SDA-CP</span></td><td>192.168.244.12</td><td>10.1.0.1</td><td>10.1.1.1</td><td>CMLUADP002</td></tr>
+        <tr><td><span class="badge badge-green">SDA-Edge1</span></td><td>192.168.244.13</td><td>10.1.0.3</td><td>10.1.1.3</td><td>CMLUADP003</td></tr>
+        <tr><td><span class="badge badge-green">SDA-Edge2</span></td><td>192.168.244.14</td><td>10.1.0.4</td><td>10.1.1.4</td><td>CMLUADP004</td></tr>
+    </table>
+    <div class="card">
+        <p><strong>SSH Access:</strong> <code>netadmin / Versa@123</code> (RADIUS via ISE) &middot; <strong>Enable:</strong> <code>Versa@123</code><br>
+        Gi0/0 in Mgmt-vrf &middot; 18GB RAM each &middot; RADIUS authenticates at privilege level 1, use <code>enable</code> for priv 15</p>
+    </div>
+
+    <h3>Management Infrastructure</h3>
+    <div class="card-grid">
+        <div class="card">
+            <h4>Catalyst Center</h4>
+            <p>IP: <code>192.168.11.254</code><br>
+               Version: 2.3.7.10<br>
+               Admin: <code>admin / Elma12743??</code><br>
+               Platform: Kubernetes/Maglev</p>
+        </div>
+        <div class="card">
+            <h4>Cisco ISE 3.5</h4>
+            <p>IP: <code>192.168.11.250</code><br>
+               FQDN: ISE.mylab.com<br>
+               Admin: <code>admin / Elma12743??</code><br>
+               Services: Session, Profiler, SXP, DeviceAdmin, pxGrid</p>
+        </div>
+        <div class="card">
+            <h4>CML Server</h4>
+            <p>IP: <code>192.168.48.156</code><br>
+               Lab ID: <code>eecd140b-...</code><br>
+               Admin: <code>admin / Elma12743??</code><br>
+               Bare Metal (Lenovo P920)</p>
+        </div>
+    </div>
+
+    <h3>Management Network (VLAN 244)</h3>
+    <table>
+        <tr><th>Parameter</th><th>Value</th></tr>
+        <tr><td>Subnet</td><td>192.168.244.0/24</td></tr>
+        <tr><td>Gateway</td><td>192.168.244.4 (3750X SVI)</td></tr>
+        <tr><td>Border External IP</td><td>192.168.244.15 (Gi1/0/2, global table)</td></tr>
+        <tr><td>DHCP Pool</td><td>192.168.244.21 - .254</td></tr>
+        <tr><td>CML Bridge</td><td>vlan244 External Connector</td></tr>
+    </table>
+</div>
+
+<!-- IS-IS UNDERLAY -->
+<div class="section" id="underlay">
+    <h2>IS-IS Underlay</h2>
+    <p>Manually configured IS-IS Level-2 underlay providing Loopback0 reachability between all fabric nodes. Cat Center does <strong>not</strong> configure the underlay automatically.</p>
+
+    <div class="card">
+        <h3>IS-IS Parameters</h3>
+        <table>
+            <tr><th>Parameter</th><th>Value</th></tr>
+            <tr><td>IS-IS Type</td><td>Level-2 Only</td></tr>
+            <tr><td>Metric Style</td><td>Wide</td></tr>
+            <tr><td>Area</td><td>49.0001</td></tr>
+            <tr><td>Fabric Subnet</td><td>10.1.1.0/24 (Gi1/0/1)</td></tr>
+            <tr><td>Loopback0</td><td>Passive interface</td></tr>
+            <tr><td>Redistribution</td><td>OSPF 1 redistributed into IS-IS (on Border)</td></tr>
+        </table>
+    </div>
+
+    <h3>Node Addressing</h3>
+    <table>
+        <tr><th>Node</th><th>Loopback0</th><th>Gi1/0/1</th><th>IS-IS NET</th></tr>
+        <tr><td>SDA-CP</td><td>10.1.0.1/32</td><td>10.1.1.1/24</td><td>49.0001.0101.0001.00</td></tr>
+        <tr><td>SDA-Border</td><td>10.1.0.2/32</td><td>10.1.1.2/24</td><td>49.0001.0101.0002.00</td></tr>
+        <tr><td>SDA-Edge1</td><td>10.1.0.3/32</td><td>10.1.1.3/24</td><td>49.0001.0101.0003.00</td></tr>
+        <tr><td>SDA-Edge2</td><td>10.1.0.4/32</td><td>10.1.1.4/24</td><td>49.0001.0101.0004.00</td></tr>
+    </table>
+
+    <h3>IS-IS Configuration (all nodes)</h3>
+    <span class="config-label">SDA-Border</span>
+    <pre>router isis
+ net 49.0001.0101.0002.00
+ is-type level-2-only
+ metric-style wide
+ redistribute ospf 1
+ passive-interface Loopback0
+
+interface GigabitEthernet1/0/1
+ ip address 10.1.1.2 255.255.255.0
+ ip router isis
+
+interface Loopback0
+ ip address 10.1.0.2 255.255.255.255</pre>
+
+    <span class="config-label">SDA-CP / Edge1 / Edge2</span>
+    <pre>router isis
+ net 49.0001.0101.000X.00    ! X=1(CP), 3(Edge1), 4(Edge2)
+ is-type level-2-only
+ metric-style wide
+ passive-interface Loopback0
+
+interface GigabitEthernet1/0/1
+ ip address 10.1.1.X 255.255.255.0   ! X=1(CP), 3(Edge1), 4(Edge2)
+ ip router isis</pre>
+
+    <h3>Verification Output (Border)</h3>
+    <pre>SDA-Border# show isis neighbors
+
+System Id       Type Interface     IP Address      State Holdtime Circuit Id
+SDA-CP          L2   Gi1/0/1       10.1.1.1        UP    20       SDA-Edge1.01
+SDA-Edge1       L2   Gi1/0/1       10.1.1.3        UP    9        SDA-Edge1.01
+SDA-Edge2       L2   Gi1/0/1       10.1.1.4        UP    25       SDA-Edge1.01
+
+SDA-Border# show ip route isis
+i L2  10.1.0.1/32 [115/10] via 10.1.1.1, GigabitEthernet1/0/1
+i L2  10.1.0.3/32 [115/10] via 10.1.1.3, GigabitEthernet1/0/1
+i L2  10.1.0.4/32 [115/10] via 10.1.1.4, GigabitEthernet1/0/1</pre>
+</div>
+
+<!-- OSPF EXTERNAL ROUTING -->
+<div class="section" id="ospf">
+    <h2>OSPF External Routing</h2>
+    <p>OSPF peering between the Border switch and the 3750X management switch. Provides ISE reachability from Loopback0 (required for RADIUS source interface).</p>
+
+    <div class="card-grid">
+        <div class="status-card green">
+            <div class="label">OSPF Neighbor</div>
+            <div class="value" style="font-size:1.2em">FULL/DR</div>
+            <div class="label">Border &harr; 3750X</div>
+        </div>
+        <div class="status-card blue">
+            <div class="label">ISE Route</div>
+            <div class="value" style="font-size:1em">192.168.10.0/23</div>
+            <div class="label">Via OSPF &rarr; IS-IS</div>
+        </div>
+    </div>
+
+    <h3>Why OSPF?</h3>
+    <div class="card">
+        <p>Cat Center configures RADIUS with <code>ip radius source-interface Loopback0</code>. ISE (192.168.11.250) is only reachable via the management network. Since Loopback0 is in the global routing table and Gi0/0 is in Mgmt-vrf, we need OSPF on a separate global-table interface to provide a path from Loopback0 to ISE.</p>
+        <p><strong>Border Gi1/0/2</strong> (192.168.244.15) connects to VLAN 244 in the global routing table. OSPF peers with 3750X (192.168.244.4). Routes redistributed into IS-IS so all fabric nodes learn the path.</p>
+    </div>
+
+    <h3>OSPF Configuration (Border)</h3>
+    <span class="config-label">SDA-Border</span>
+    <pre>interface GigabitEthernet1/0/2
+ ip address 192.168.244.15 255.255.255.0
+ no shutdown
+
+router ospf 1
+ redistribute connected
+ redistribute isis level-1-2
+ network 192.168.244.0 0.0.0.255 area 0
+
+! IS-IS also redistributes OSPF
+router isis
+ redistribute ospf 1</pre>
+
+    <h3>Verification</h3>
+    <pre>SDA-Border# show ip ospf neighbor
+
+Neighbor ID     Pri  State       Dead Time  Address         Interface
+192.168.250.4     1  FULL/DR     00:00:36   192.168.244.4   GigabitEthernet1/0/2
+
+SDA-Border# show ip route 192.168.11.250
+Routing entry for 192.168.10.0/23, supernet
+  Known via "ospf 1", distance 110, metric 3, type intra area
+  Redistributing via isis
+  Last update from 192.168.244.4 on GigabitEthernet1/0/2</pre>
+</div>
+
+<!-- LISP/VXLAN OVERLAY -->
+<div class="section" id="overlay">
+    <h2>LISP / VXLAN Overlay</h2>
+    <p>LISP Pub/Sub control plane pushed by Catalyst Center. Provides endpoint-to-RLOC mapping for VXLAN data plane.</p>
+
+    <div class="card-grid">
+        <div class="status-card blue">
+            <div class="label">Protocol</div>
+            <div class="value" style="font-size:1.4em">LISP Pub/Sub</div>
+            <div class="label">Modern SD-Access CP</div>
+        </div>
+        <div class="status-card purple">
+            <div class="label">Domain ID</div>
+            <div class="value" style="font-size:1.2em">4218702598</div>
+            <div class="label">LISP Domain</div>
+        </div>
+        <div class="status-card green">
+            <div class="label">Instance ID</div>
+            <div class="value">4099</div>
+            <div class="label">Corp_VN</div>
+        </div>
+    </div>
+
+    <h3>LISP Sessions</h3>
+    <table>
+        <tr><th>From</th><th>To</th><th>Port</th><th>State</th></tr>
+        <tr><td>SDA-Border (10.1.0.2)</td><td>SDA-CP (10.1.0.1)</td><td>4342</td><td><span class="badge badge-green">UP</span></td></tr>
+        <tr><td>SDA-Edge1 (10.1.0.3)</td><td>SDA-CP (10.1.0.1)</td><td>4342</td><td><span class="badge badge-green">UP</span></td></tr>
+        <tr><td>SDA-Edge2 (10.1.0.4)</td><td>SDA-CP (10.1.0.1)</td><td>4342</td><td><span class="badge badge-green">UP</span></td></tr>
+    </table>
+
+    <h3>LISP Configuration (Border - pushed by Cat Center)</h3>
+    <span class="config-label">SDA-Border - router lisp</span>
+    <pre>router lisp
+ domain-id 4218702598
+ multihoming-id 19206
+ locator-table default
+ locator-set rloc_3f46de68-42fc-433c-b4b3-32aa1f50fc38
+  IPv4-interface Loopback0 priority 10 weight 10
+  auto-discover-rlocs
+ !
+ service ipv4
+  encapsulation vxlan
+  map-cache publications
+  import publication publisher 10.1.0.1
+  itr map-resolver 10.1.0.1
+  etr map-server 10.1.0.1 proxy-reply
+  etr
+  sgt
+  proxy-etr
+  proxy-itr 10.1.0.2
+ !
+ instance-id 4099
+  service ipv4
+   eid-table vrf Corp_VN
+   database-mapping 0.0.0.0/0 locator-set DEFAULT_ETR_LOCATOR default-etr local</pre>
+
+    <span class="config-label">SDA-Edge1 - router lisp</span>
+    <pre>router lisp
+ domain-id 4218702598
+ service ipv4
+  encapsulation vxlan
+  itr map-resolver 10.1.0.1
+  etr map-server 10.1.0.1 proxy-reply
+  etr
+  sgt
+  proxy-itr 10.1.0.3
+ !
+ instance-id 4099
+  dynamic-eid Corp_VLAN-IPV4
+   database-mapping 10.10.20.0/24 locator-set rloc_c400894d-...
+  service ipv4
+   eid-table vrf Corp_VN
+   map-cache 0.0.0.0/0 map-request
+ !
+ instance-id 8188
+  service ethernet
+   eid-table vlan 1021
+   broadcast-underlay 239.0.17.1
+   flood arp-nd
+   flood unknown-unicast</pre>
+
+    <h3>Verification Output - Per Device</h3>
+
+    <h4>SDA-Border (10.1.0.2) - Proxy xTR</h4>
+    <span class="config-label">show lisp session</span>
+    <pre>Sessions for VRF default, total: 1, established: 1
+Peer            State      Up/Down        In/Out    Users
+10.1.0.1:4342   Up         01:33:51       24/7      4</pre>
+
+    <span class="config-label">show lisp instance-id 4099 ipv4 (key fields)</span>
+    <pre>Instance ID:                    4099
+EID table:                      vrf Corp_VN
+Proxy-ITR Router (PITR):        enabled RLOCs: 10.1.0.2
+Proxy-ETR Router (PETR):        enabled
+Map Server (MS):                disabled
+Map Resolver (MR):              disabled
+Publication-Subscription:       enabled
+  Publisher(s):                 10.1.0.1
+ITR Map-Resolver(s):            10.1.0.1
+ETR Map-Server(s):              10.1.0.1 domain-id 4218702598
+Encapsulation type:             vxlan</pre>
+
+    <span class="config-label">show lisp instance-id 4099 ipv4 map-cache</span>
+    <pre>LISP IPv4 Mapping Cache for EID-table vrf Corp_VN (IID 4099), 2 entries
+
+0.0.0.0/0, via away, send-map-request
+  Negative cache entry, action: send-map-request
+10.10.20.0/24, via pub-sub-send-map-req, send-map-request
+  Negative cache entry, action: send-map-request</pre>
+
+    <span class="config-label">show lisp instance-id 4099 ipv4 database</span>
+    <pre>LISP ETR IPv4 Mapping Database for vrf Corp_VN (IID 4099)
+Entries total 1, no-route 1, inactive 0
+
+0.0.0.0/0, locator-set DEFAULT_ETR_LOCATOR, default-ETR
+  Locator   Pri/Wgt  Source     State
+  10.1.0.2   10/10   cfg-intf   site-self, unreachable</pre>
+
+    <span class="config-label">show nve peers / show nve vni</span>
+    <pre>! No NVE peers or VNIs yet (no hosts connected, no VXLAN traffic)</pre>
+
+    <h4>SDA-CP (10.1.0.1) - Map-Server / Map-Resolver</h4>
+    <span class="config-label">show lisp session</span>
+    <pre>Sessions for VRF default, total: 6, established: 3
+Peer            State      Up/Down        In/Out    Users
+10.1.0.2:20445  Up         01:33:53        7/24     4     (Border)
+10.1.0.3:44718  Up         01:32:19        5/10     3     (Edge1)
+10.1.0.4:11089  Up         01:32:19        4/9      3     (Edge2)</pre>
+
+    <span class="config-label">show lisp instance-id 4099 ipv4 (key fields)</span>
+    <pre>Instance ID:                    4099
+EID table:                      vrf Corp_VN
+Map Server (MS):                enabled
+Map Resolver (MR):              enabled
+Mr-use-petr:                    enabled
+Publication-Subscription:       enabled
+Encapsulation type:             vxlan</pre>
+
+    <span class="config-label">show lisp instance-id 4099 ipv4 server summary</span>
+    <pre>                     -----------  IPv4 -----------
+ Site name            Configured Registered Incons
+site_uci                      2          0      0
+
+Number of configured sites:                 1
+Number of registered sites:                 0     (no hosts yet)
+Number of configured EID prefixes:          2
+Number of registered EID prefixes:          0</pre>
+
+    <h4>SDA-Edge1 (10.1.0.3) - xTR / VTEP</h4>
+    <span class="config-label">show lisp session</span>
+    <pre>Sessions for VRF default, total: 1, established: 1
+Peer            State      Up/Down        In/Out    Users
+10.1.0.1:4342   Up         01:32:21       10/5      5</pre>
+
+    <span class="config-label">show lisp instance-id 4099 ipv4 (key fields)</span>
+    <pre>Instance ID:                    4099
+EID table:                      vrf Corp_VN
+ETR:                            enabled
+Proxy-ITR Router (PITR):        enabled RLOCs: 10.1.0.3
+Map Server (MS):                disabled
+Map Resolver (MR):              disabled
+Publication-Subscription:       enabled
+ITR Map-Resolver(s):            10.1.0.1
+ETR Map-Server(s):              10.1.0.1
+Encapsulation type:             vxlan</pre>
+
+    <span class="config-label">show lisp instance-id 4099 ipv4 map-cache</span>
+    <pre>LISP IPv4 Mapping Cache for EID-table vrf Corp_VN (IID 4099), 2 entries
+
+0.0.0.0/0, via static-send-map-request
+  Negative cache entry, action: send-map-request
+10.10.20.0/24, via dynamic-EID, send-map-request
+  Negative cache entry, action: send-map-request</pre>
+
+    <h4>SDA-Edge2 (10.1.0.4) - xTR / VTEP</h4>
+    <span class="config-label">show lisp session</span>
+    <pre>Sessions for VRF default, total: 1, established: 1
+Peer            State      Up/Down        In/Out    Users
+10.1.0.1:4342   Up         01:32:22        9/4      5</pre>
+
+    <span class="config-label">show lisp instance-id 4099 ipv4 (key fields)</span>
+    <pre>Instance ID:                    4099
+EID table:                      vrf Corp_VN
+ETR:                            enabled
+Proxy-ITR Router (PITR):        enabled RLOCs: 10.1.0.4
+Publication-Subscription:       enabled
+ITR Map-Resolver(s):            10.1.0.1
+ETR Map-Server(s):              10.1.0.1
+Encapsulation type:             vxlan</pre>
+
+    <span class="config-label">show lisp instance-id 4099 ipv4 map-cache</span>
+    <pre>LISP IPv4 Mapping Cache for EID-table vrf Corp_VN (IID 4099), 2 entries
+
+0.0.0.0/0, via static-send-map-request
+  Negative cache entry, action: send-map-request
+10.10.20.0/24, via dynamic-EID, send-map-request
+  Negative cache entry, action: send-map-request</pre>
+</div>
+
+<!-- VIRTUAL NETWORKS -->
+<div class="section" id="vn">
+    <h2>Virtual Networks & IP Pools</h2>
+
+    <div class="card">
+        <h3>Corp_VN</h3>
+        <table>
+            <tr><th>Parameter</th><th>Value</th></tr>
+            <tr><td>VN Name</td><td>Corp_VN</td></tr>
+            <tr><td>VRF</td><td>Corp_VN (on all 4 switches)</td></tr>
+            <tr><td>LISP Instance-ID</td><td>4099</td></tr>
+            <tr><td>L2 Instance-ID</td><td>8188</td></tr>
+            <tr><td>VLAN</td><td>1021 (Corp_VLAN)</td></tr>
+            <tr><td>Anycast Gateway IP</td><td>10.10.20.1/24</td></tr>
+            <tr><td>Anycast Gateway MAC</td><td>0000.0c9f.f5fc</td></tr>
+            <tr><td>Traffic Type</td><td>DATA</td></tr>
+        </table>
+    </div>
+
+    <h3>IP Pools</h3>
+    <table>
+        <tr><th>Pool Name</th><th>CIDR</th><th>Gateway</th><th>Scope</th></tr>
+        <tr><td>SDA-Global-Pool</td><td>10.10.0.0/16</td><td>&mdash;</td><td>Global</td></tr>
+        <tr><td>Corp-Fabric-Pool</td><td>10.10.20.0/24</td><td>10.10.20.1</td><td>Fabric Site (SDA-Lab)</td></tr>
+    </table>
+
+    <h3>VRF Configuration</h3>
+    <span class="config-label">All Switches</span>
+    <pre>vrf definition Corp_VN
+ rd 1:4099
+ address-family ipv4
+  route-target export 1:4099
+  route-target import 1:4099</pre>
+
+    <h3>Anycast Gateway (Edge1/Edge2)</h3>
+    <span class="config-label">Edge1 &amp; Edge2</span>
+    <pre>interface Vlan1021
+ description Configured from Catalyst Center
+ mac-address 0000.0c9f.f5fc
+ vrf forwarding Corp_VN
+ ip address 10.10.20.1 255.255.255.0
+ ip helper-address 10.10.20.1
+ no ip redirects
+ ip route-cache same-interface
+ lisp mobility Corp_VLAN-IPV4</pre>
+
+    <h3>Verification</h3>
+    <pre>show vrf
+  Name           Default RD       Protocols  Interfaces
+  Corp_VN        1:4099           ipv4       Lo1021, Vlan1021, LI0.4099
+  Mgmt-vrf       &lt;not set&gt;        ipv4,ipv6  Gi0/0
+
+show ip interface brief | include Vlan1021
+Vlan1021   10.10.20.1   YES manual up   up</pre>
+</div>
+
+<!-- AAA / RADIUS / 802.1X -->
+<div class="section" id="aaa">
+    <h2>AAA / RADIUS / 802.1X</h2>
+    <p>AAA configuration pushed by Catalyst Center after ISE was configured as AAA server in Network Settings. Authentication template set to <strong>Open Authentication</strong>.</p>
+
+    <div class="card-grid">
+        <div class="status-card green">
+            <div class="label">Auth Template</div>
+            <div class="value" style="font-size:1.2em">Open Auth</div>
+            <div class="label">802.1X Enabled</div>
+        </div>
+        <div class="status-card blue">
+            <div class="label">RADIUS Server</div>
+            <div class="value" style="font-size:1em">192.168.11.250</div>
+            <div class="label">ISE 3.5</div>
+        </div>
+        <div class="status-card cyan">
+            <div class="label">Source Interface</div>
+            <div class="value" style="font-size:1.2em">Loopback0</div>
+            <div class="label">Via OSPF to ISE</div>
+        </div>
+    </div>
+
+    <h3>AAA Configuration (pushed by Cat Center)</h3>
+    <span class="config-label">All Switches</span>
+    <pre>aaa new-model
+
+! RADIUS server groups
+aaa group server radius dnac-network-radius-group
+ server name dnac-radius_192.168.11.250
+ ip radius source-interface Loopback0
+aaa group server radius dnac-client-radius-group
+ server name dnac-radius_192.168.11.250
+ ip radius source-interface Loopback0
+
+! Authentication
+aaa authentication login default local
+aaa authentication login VTY_authen group dnac-network-radius-group local
+aaa authentication login dnac-cts-list group dnac-client-radius-group local
+aaa authentication dot1x default group dnac-client-radius-group
+
+! Authorization
+aaa authorization exec default local
+aaa authorization exec VTY_author group dnac-network-radius-group local if-authenticated
+aaa authorization network default group dnac-client-radius-group
+aaa authorization network dnac-cts-list group dnac-client-radius-group
+
+! Accounting
+aaa accounting update newinfo periodic 2880
+aaa accounting identity default start-stop group dnac-client-radius-group
+aaa accounting exec default start-stop group dnac-network-radius-group
+
+! Dynamic Authorization (CoA from ISE)
+aaa server radius dynamic-author
+ client 192.168.11.250 server-key 7 046D0E141C201D1C5A</pre>
+
+    <h3>RADIUS Server Configuration</h3>
+    <span class="config-label">All Switches</span>
+    <pre>ip radius source-interface Loopback0
+radius-server attribute 6 on-for-login-auth
+radius-server attribute 6 support-multiple
+radius-server attribute 8 include-in-access-req
+radius-server attribute 25 access-request include
+radius-server attribute 31 mac format ietf upper-case
+radius-server attribute 31 send nas-port-detail mac-only
+radius-server dead-criteria time 5 tries 3
+radius-server deadtime 3
+
+radius server dnac-radius_192.168.11.250
+ address ipv4 192.168.11.250 auth-port 1812 acct-port 1813
+ timeout 4
+ retransmit 3
+ automate-tester username dummy ignore-acct-port probe-on
+ pac key 7 01250316480A575D72</pre>
+
+    <h3>CTS / TrustSec Verification - Per Device</h3>
+
+    <h4>show cts environment-data (same on all 4 switches)</h4>
+    <pre>CTS Environment Data
+====================
+Current state = COMPLETE
+Last status = Successful
+Local Device SGT:
+  SGT tag = 2-00:TrustSec_Devices
+Server List Info:
+  Installed list: CTSServerList1-0001, 1 server(s):
+  *Server: 192.168.11.250, port 1812
+   A-ID ABD65075CAFB435A3376DB585905851A
+   Status = ALIVE, auto-test = TRUE
+Security Group Name Table:
+    0-00:Unknown            2-00:TrustSec_Devices
+    3-00:Network_Services   4-00:Employees
+    5-00:Contractors        6-00:Guests
+    7-00:Production_Users   8-00:Developers
+    9-00:Auditors          10-00:Point_of_Sale_Systems
+   11-00:Production_Servers 12-00:Development_Servers
+   13-00:Test_Servers       14-00:PCI_Servers
+   15-00:BYOD             255-00:Quarantined_Systems
+Environment Data Lifetime = 86400 secs</pre>
+
+    <h4>show cts role-based sgt-map all</h4>
+    <span class="config-label">SDA-Border</span>
+    <pre>IP Address              SGT     Source
+============================================
+10.1.0.2                2       INTERNAL    (Loopback0)
+10.1.1.2                2       INTERNAL    (Gi1/0/1 fabric)
+192.168.244.15          2       INTERNAL    (Gi1/0/2 OSPF)
+Total number of active bindings = 3</pre>
+
+    <span class="config-label">SDA-CP</span>
+    <pre>IP Address              SGT     Source
+============================================
+10.1.0.1                2       INTERNAL    (Loopback0)
+10.1.1.1                2       INTERNAL    (Gi1/0/1 fabric)
+Total number of active bindings = 2</pre>
+
+    <span class="config-label">SDA-Edge1</span>
+    <pre>IP Address              SGT     Source
+============================================
+10.1.0.3                2       INTERNAL    (Loopback0)
+10.1.1.3                2       INTERNAL    (Gi1/0/1 fabric)
+Total number of active bindings = 2</pre>
+
+    <span class="config-label">SDA-Edge2</span>
+    <pre>IP Address              SGT     Source
+============================================
+10.1.0.4                2       INTERNAL    (Loopback0)
+10.1.1.4                2       INTERNAL    (Gi1/0/1 fabric)
+Total number of active bindings = 2</pre>
+
+    <h4>show cts sxp connections (all switches)</h4>
+    <pre>SXP              : Disabled
+Highest Version Supported: 5
+Default Password : Not Set
+Default Source IP: Not Set
+
+There are no SXP Connections.</pre>
+
+    <h4>show cts sxp sgt-map (all switches)</h4>
+    <pre>There are no IP-SGT Mappings
+! SXP not yet configured - will populate after SXP is enabled
+! and endpoints authenticate via 802.1X with SGT assignment</pre>
+</div>
+
+<!-- ISE -->
+<div class="section" id="ise">
+    <h2>ISE Integration</h2>
+
+    <div class="card-grid">
+        <div class="status-card green">
+            <div class="label">ISE State</div>
+            <div class="value" style="font-size:1.4em">ACTIVE</div>
+            <div class="label">pxGrid TRUSTED</div>
+        </div>
+        <div class="status-card blue">
+            <div class="label">Version</div>
+            <div class="value" style="font-size:1.2em">ISE 3.5</div>
+            <div class="label">Cisco-vISE-300-3.5.0.527</div>
+        </div>
+        <div class="status-card cyan">
+            <div class="label">Network Devices</div>
+            <div class="value">4</div>
+            <div class="label">All Registered</div>
+        </div>
+    </div>
+
+    <h3>Integration Details</h3>
+    <table>
+        <tr><th>Parameter</th><th>Value</th></tr>
+        <tr><td>ISE IP</td><td>192.168.11.250</td></tr>
+        <tr><td>FQDN</td><td>ISE.mylab.com</td></tr>
+        <tr><td>pxGrid</td><td><span class="badge badge-green">Enabled / TRUSTED</span></td></tr>
+        <tr><td>RADIUS Port</td><td>1812 / 1813</td></tr>
+        <tr><td>RADIUS Shared Secret</td><td>Versa123</td></tr>
+        <tr><td>Role</td><td>Primary</td></tr>
+    </table>
+
+    <h3>ISE Services</h3>
+    <div class="card">
+        <p><span class="badge badge-green">Session</span>
+           <span class="badge badge-blue">Profiler</span>
+           <span class="badge badge-cyan">SXP Service</span>
+           <span class="badge badge-purple">DeviceAdmin (TACACS+)</span>
+           <span class="badge badge-orange">pxGrid</span></p>
+    </div>
+
+    <h3>ISE Internal Users</h3>
+    <table>
+        <tr><th>Username</th><th>Password</th><th>Identity Group</th><th>Purpose</th></tr>
+        <tr><td>netadmin</td><td>Versa@123</td><td>Employee</td><td>Switch SSH admin access</td></tr>
+        <tr><td>versa</td><td>Cisco@1234</td><td>Employee</td><td>Alternate admin</td></tr>
+        <tr><td>User_1 ... User_10</td><td>Cisco@1234</td><td>Employee</td><td>Test 802.1X endpoints</td></tr>
+    </table>
+    <p><em>Note: ISE password policy prevents passwords from containing the username (case-insensitive).</em></p>
+
+    <h3>Security Group Tags (SGTs)</h3>
+    <table>
+        <tr><th>SGT Name</th><th>Tag Value</th><th>Description</th></tr>
+        <tr><td>Unknown</td><td>0</td><td>Unauthenticated / unknown endpoints</td></tr>
+        <tr><td>TrustSec_Devices</td><td>2</td><td>Network infrastructure devices</td></tr>
+        <tr><td>Network_Services</td><td>3</td><td>Network services (DNS, DHCP, etc.)</td></tr>
+        <tr><td><strong>Employees</strong></td><td><strong>4</strong></td><td><strong>Employee endpoints (primary test SGT)</strong></td></tr>
+        <tr><td>Contractors</td><td>5</td><td>Contractor endpoints</td></tr>
+        <tr><td>Guests</td><td>6</td><td>Guest users</td></tr>
+        <tr><td>Production_Users</td><td>7</td><td>Production users</td></tr>
+        <tr><td>Developers</td><td>8</td><td>Developer endpoints</td></tr>
+        <tr><td>Auditors</td><td>9</td><td>Auditors</td></tr>
+        <tr><td>BYOD</td><td>15</td><td>Bring Your Own Device</td></tr>
+        <tr><td>Quarantined_Systems</td><td>255</td><td>Quarantine</td></tr>
+    </table>
+
+    <h3>TACACS+ Device Administration</h3>
+    <div class="card">
+        <p><strong>Policy Set:</strong> Default (enabled)<br>
+        <strong>Authentication:</strong> All_User_ID_Stores<br>
+        <strong>Authorization:</strong> Permit_Admin_Access rule for Employee group (Default Shell Profile)<br>
+        <strong>Note:</strong> SSH login lands at privilege level 1. Use <code>enable</code> with secret <code>Versa@123</code> for priv 15.</p>
+    </div>
+</div>
+
+<!-- SXP / SGT -->
+<div class="section" id="sxp">
+    <h2>SXP / SGT</h2>
+
+    <div class="card">
+        <h3>Architecture</h3>
+        <pre style="color: var(--accent-cyan);">
+  [Endpoints] ---- [Edge1/Edge2] ---- [CP] ---- [Border]
+       |                                           |
+       | SGT assigned                          SXP Speaker
+       | by ISE                                    |
+       |                                    +------+------+
+       |                                    |             |
+                                    [Cisco Router]  [Versa FlexVNF]
+                                    SXP Listener    SXP Listener
+                                                    SGT-based Policy</pre>
+    </div>
+
+    <h3>Current SXP Status</h3>
+    <pre>SDA-Border# show cts sxp connections
+ SXP              : Disabled
+ Highest Version Supported: 5
+ Default Password : Not Set
+ Default Source IP: Not Set
+
+There are no SXP Connections.</pre>
+
+    <h3>Remaining Steps</h3>
+    <table>
+        <tr><th>#</th><th>Task</th><th>Status</th></tr>
+        <tr><td>1</td><td>Add test hosts to Edge1/Edge2 Gi1/0/2</td><td><span class="badge badge-orange">TODO</span></td></tr>
+        <tr><td>2</td><td>Create ISE authorization policy (assign SGTs per user)</td><td><span class="badge badge-orange">TODO</span></td></tr>
+        <tr><td>3</td><td>Add Cisco router + Versa FlexVNF to CML topology</td><td><span class="badge badge-orange">TODO</span></td></tr>
+        <tr><td>4</td><td>Configure Border L3 Handoff transit (BGP)</td><td><span class="badge badge-orange">TODO</span></td></tr>
+        <tr><td>5</td><td>Enable SXP on Border (Speaker)</td><td><span class="badge badge-orange">TODO</span></td></tr>
+        <tr><td>6</td><td>Configure SXP Listeners on external devices</td><td><span class="badge badge-orange">TODO</span></td></tr>
+        <tr><td>7</td><td>Verify IP-SGT propagation end-to-end</td><td><span class="badge badge-orange">TODO</span></td></tr>
+    </table>
+
+    <h3>Verification Commands (for later)</h3>
+    <pre>show cts environment-data
+show cts role-based sgt-map all
+show cts sxp connections
+show cts sxp sgt-map</pre>
+</div>
+
+<!-- CATALYST CENTER -->
+<div class="section" id="catcenter">
+    <h2>Catalyst Center</h2>
+
+    <h3>Site Hierarchy</h3>
+    <div class="card">
+        <pre style="color: var(--accent-blue);">Global
+  +-- SDA-Lab (Area) &lt;-- Fabric Site
+       +-- Building-1 (Building) &lt;-- Fabric Zone
+            +-- Floor-1 (Floor) &lt;-- All 4 devices assigned</pre>
+    </div>
+
+    <h3>Cat Center IDs</h3>
+    <table>
+        <tr><th>Object</th><th>ID</th></tr>
+        <tr><td>Area (SDA-Lab)</td><td><code>18e43abf-d94b-4401-bd03-1993405a74b1</code></td></tr>
+        <tr><td>Building (Building-1)</td><td><code>8d241d3f-83d6-454a-8410-b5d55202b9f8</code></td></tr>
+        <tr><td>Floor (Floor-1)</td><td><code>7383d647-86cc-44e0-8d5a-789515bee22b</code></td></tr>
+        <tr><td>Fabric Zone</td><td><code>c11763e3-e13e-44c6-9de2-3f8e3e250476</code></td></tr>
+        <tr><td>SDA-Border</td><td><code>3f46de68-42fc-433c-b4b3-32aa1f50fc38</code></td></tr>
+        <tr><td>SDA-CP</td><td><code>cddc87d8-c8bf-476c-bfcc-3e49a2d5896d</code></td></tr>
+        <tr><td>SDA-Edge1</td><td><code>c400894d-e932-4326-8b81-021afa7164ab</code></td></tr>
+        <tr><td>SDA-Edge2</td><td><code>68f16da7-fbed-409f-9cbc-6eec5e24638f</code></td></tr>
+    </table>
+
+    <h3>API Quick Reference</h3>
+    <pre># Authentication
+POST /dna/system/api/v1/auth/token
+Authorization: Basic &lt;base64(admin:password)&gt;
+
+# Key Endpoints
+GET  /dna/intent/api/v1/network-device
+GET  /dna/intent/api/v1/sda/fabricSites
+GET  /dna/intent/api/v1/sda/fabricZones
+GET  /dna/intent/api/v1/sda/anycastGateways
+GET  /dna/intent/api/v1/global-pool
+GET  /dna/intent/api/v1/authentication-policy-servers
+GET  /dna/intent/api/v1/virtual-network?virtualNetworkName=Corp_VN</pre>
+</div>
+
+<!-- SCRIPTS -->
+<div class="section" id="scripts">
+    <h2>Scripts & Tools</h2>
+
+    <table>
+        <tr><th>Script</th><th>Purpose</th><th>Status</th></tr>
+        <tr><td><code>verify_fabric.py</code></td><td>IS-IS / LISP / VXLAN / VRF / CTS / SXP check on all switches</td><td><span class="badge badge-green">Ready</span></td></tr>
+        <tr><td><code>verify_catcenter.py</code></td><td>Cat Center API: devices, fabric, VN, pools, ISE status</td><td><span class="badge badge-green">Ready</span></td></tr>
+        <tr><td><code>create_sda_v2.py</code></td><td>CML YAML import with vswitch.xml serial numbers</td><td><span class="badge badge-blue">Used</span></td></tr>
+        <tr><td><code>sda_topology.yaml</code></td><td>CML topology definition (4x Cat9Kv + switches)</td><td><span class="badge badge-blue">Imported</span></td></tr>
+    </table>
+
+    <h3>Netmiko Connection Template</h3>
+    <pre>import sys
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+from netmiko import ConnectHandler
+
+dev = {
+    'device_type': 'cisco_ios',
+    'host': '192.168.244.11',  # Change per switch
+    'username': 'netadmin',     # ISE internal user
+    'password': 'Versa@123',
+    'secret': 'Versa@123',     # Enable secret
+    'timeout': 45,
+    'auth_timeout': 45,
+}
+conn = ConnectHandler(**dev)
+conn.enable()   # RADIUS lands at priv 1, must enable for priv 15</pre>
+
+    <h3>Saved Configurations</h3>
+    <p>Full running configs saved in <code>configs/</code> directory:</p>
+    <table>
+        <tr><th>File</th><th>Size</th></tr>
+        <tr><td><code>SDA-Border_running.txt</code></td><td>~22 KB</td></tr>
+        <tr><td><code>SDA-CP_running.txt</code></td><td>~21 KB</td></tr>
+        <tr><td><code>SDA-Edge1_running.txt</code></td><td>~38 KB</td></tr>
+        <tr><td><code>SDA-Edge2_running.txt</code></td><td>~38 KB</td></tr>
+    </table>
+</div>
+
+<!-- PROGRESS -->
+<div class="section" id="progress">
+    <h2>Progress Tracker</h2>
+
+    <p style="margin-bottom: 4px;">Overall Progress: <strong>31 / 37 tasks</strong></p>
+    <div class="progress-bar"><div class="fill" style="width: 84%"></div></div>
+
+    <h3>Completed</h3>
+    <div class="timeline">
+        <div class="timeline-item done">CML topology created (4x Cat9Kv UADP + switches + external connector)</div>
+        <div class="timeline-item done">Serial numbers assigned via vswitch.xml (CMLUADP001-004)</div>
+        <div class="timeline-item done">Management IPs configured (192.168.244.11-14 in Mgmt-vrf)</div>
+        <div class="timeline-item done">SSH access verified on all 4 switches</div>
+        <div class="timeline-item done">SNMP community "versa" configured (RO+RW)</div>
+        <div class="timeline-item done">Cat Center credentials added (CLI + SNMPv2c via API)</div>
+        <div class="timeline-item done">Cat Center discovery &mdash; all 4 switches Reachable</div>
+        <div class="timeline-item done">Site hierarchy: SDA-Lab &rarr; Building-1 &rarr; Floor-1</div>
+        <div class="timeline-item done">Devices provisioned to Floor-1</div>
+        <div class="timeline-item done">Fabric site created (auth template: None, later changed to Open Auth)</div>
+        <div class="timeline-item done">Fabric zone created (Building-1 level)</div>
+        <div class="timeline-item done">Roles assigned: CP (LISP Pub/Sub), Border (L3, AS 65001), Edge1+Edge2</div>
+        <div class="timeline-item done">IS-IS underlay manually configured (L2, wide metrics)</div>
+        <div class="timeline-item done">IS-IS adjacencies verified &mdash; all UP</div>
+        <div class="timeline-item done">LISP overlay pushed by Cat Center</div>
+        <div class="timeline-item done"><code>ip routing</code> + Loopback0 configured on all switches</div>
+        <div class="timeline-item done">ISE 3.5 installed (192.168.11.250)</div>
+        <div class="timeline-item done">Global IP pool (10.10.0.0/16) + fabric sub-pool (10.10.20.0/24)</div>
+        <div class="timeline-item done">Virtual Network "Corp_VN" created + assigned to site/zone</div>
+        <div class="timeline-item done">Anycast Gateway (Vlan1021, 10.10.20.1/24) at site + zone level</div>
+        <div class="timeline-item done">LISP sessions fully established (CP &harr; Border/Edge1/Edge2)</div>
+        <div class="timeline-item done">VRF Corp_VN active on all switches</div>
+        <div class="timeline-item done">ISE integrated with Cat Center (pxGrid TRUSTED, ACTIVE)</div>
+        <div class="timeline-item done">OSPF peering: Border Gi1/0/2 (.15) &harr; 3750X (.4) &mdash; ISE reachable from Loopback0</div>
+        <div class="timeline-item done">OSPF&rarr;IS-IS redistribution on Border (all fabric nodes learn external routes)</div>
+        <div class="timeline-item done">AAA/RADIUS config pushed by Cat Center (ISE as AAA server)</div>
+        <div class="timeline-item done">ISE internal users created: netadmin, versa, User_1 through User_10</div>
+        <div class="timeline-item done">CTS environment COMPLETE &mdash; all 16 SGTs downloaded from ISE</div>
+        <div class="timeline-item done">TACACS+ Device Admin policy configured in ISE</div>
+        <div class="timeline-item done">Auth template changed to "Open Authentication"</div>
+        <div class="timeline-item done">Running configs saved to configs/ directory</div>
+    </div>
+
+    <h3>Remaining</h3>
+    <div class="timeline">
+        <div class="timeline-item pending">Add test hosts to Edge1/Edge2 Gi1/0/2</div>
+        <div class="timeline-item pending">Create ISE authorization policy (assign SGTs per user/group)</div>
+        <div class="timeline-item pending">Add external devices (Cisco router + Versa FlexVNF) to CML</div>
+        <div class="timeline-item pending">Configure Border L3 Handoff transit (BGP)</div>
+        <div class="timeline-item pending">Enable SXP on Border &rarr; external devices</div>
+        <div class="timeline-item pending">Verify IP-SGT propagation end-to-end</div>
+    </div>
+</div>
+
+</main>
+
+<script>
+document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', function() {
+        const sectionId = this.dataset.section;
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(sectionId).classList.add('active');
+        this.classList.add('active');
+        document.querySelector('.sidebar').classList.remove('open');
+        window.location.hash = sectionId;
+    });
+});
+window.addEventListener('load', function() {
+    const hash = window.location.hash.replace('#', '');
+    if (hash) {
+        const navItem = document.querySelector(`.nav-item[data-section="${hash}"]`);
+        if (navItem) navItem.click();
+    }
+});
+</script>
+</body>
+</html>

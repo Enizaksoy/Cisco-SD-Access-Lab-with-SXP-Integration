@@ -1,0 +1,587 @@
+Building configuration...
+
+Current configuration : 20674 bytes
+!
+! Last configuration change at 09:27:03 UTC Fri Feb 27 2026 by admin
+!
+version 17.15
+service timestamps debug datetime msec
+service timestamps log datetime msec
+service password-encryption
+!
+hostname SDA-CP
+!
+!
+vrf definition Corp_VN
+ rd 1:4099
+ !
+ address-family ipv4
+  route-target export 1:4099
+  route-target import 1:4099
+ exit-address-family
+!
+vrf definition Mgmt-vrf
+ !
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+aaa new-model
+!
+!
+aaa group server radius dnac-network-radius-group
+ server name dnac-radius_192.168.11.250
+ ip radius source-interface Loopback0
+!
+aaa group server radius dnac-client-radius-group
+ server name dnac-radius_192.168.11.250
+ ip radius source-interface Loopback0
+!
+aaa authentication login default local
+aaa authentication login VTY_authen group dnac-network-radius-group local
+aaa authentication login dnac-cts-list group dnac-client-radius-group local
+aaa authentication dot1x default group dnac-client-radius-group
+aaa authorization exec default local 
+aaa authorization exec VTY_author group dnac-network-radius-group local if-authenticated 
+aaa authorization network default group dnac-client-radius-group 
+aaa authorization network dnac-cts-list group dnac-client-radius-group 
+aaa accounting update newinfo periodic 2880
+aaa accounting identity default start-stop group dnac-client-radius-group
+aaa accounting exec default start-stop group dnac-network-radius-group
+!
+!
+aaa server radius dynamic-author
+ client 192.168.11.250 server-key 7 0817495C1A18544541
+!
+aaa session-id common
+switch 1 provision c9kv-uadp-8p
+!
+!
+!
+!
+ip routing
+!
+!
+!
+!
+!
+!
+!
+!
+login on-success log
+!
+!
+!
+!
+!
+!
+!
+mpls label mode all-vrfs protocol all-afs per-vrf
+!
+access-session mac-move deny
+device-tracking tracking
+!
+device-tracking policy IPDT_POLICY
+ tracking enable
+!
+!
+crypto pki trustpoint TP-self-signed-945233058
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-945233058
+ revocation-check none
+ rsakeypair TP-self-signed-945233058
+ hash sha512
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+ hash sha512
+!
+crypto pki trustpoint DNAC-CA
+ enrollment mode ra
+ enrollment terminal
+ usage ssl-client
+ revocation-check crl none
+ source interface GigabitEthernet0/0
+ hash sha512
+!
+!
+crypto pki certificate chain TP-self-signed-945233058
+ certificate self-signed 01
+  3082032E 30820216 A0030201 02020101 300D0609 2A864886 F70D0101 0D050030 
+  30312E30 2C060355 04030C25 494F532D 53656C66 2D536967 6E65642D 43657274 
+  69666963 6174652D 39343532 33333035 38301E17 0D323630 32323730 37303235 
+  355A170D 33363032 32373037 30323535 5A303031 2E302C06 03550403 0C25494F 
+  532D5365 6C662D53 69676E65 642D4365 72746966 69636174 652D3934 35323333 
+  30353830 82012230 0D06092A 864886F7 0D010101 05000382 010F0030 82010A02 
+  82010100 ADE455AC A8BD283C 80783D69 94E3783A 4B0BA0BA B689BBF1 B27920FA 
+  3AAD7F5D 1906CBD3 157AEC5C 2CA4F473 F1B7DC76 0E506313 134A5F99 CB2D3D94 
+  8EB56CF0 06F4AD12 F92E3A43 F78C7D07 F60F7AB5 D005FAE4 B564A4C6 B7DA0204 
+  E55C5D7D CB018DA6 8ED12918 7938E458 EB70B1E7 2CA7FDF0 F072183C B1E7528A 
+  CBD71178 E98C00AF 651AEE68 72259C60 60605741 D9455B81 F994ADE7 B18E4BA1 
+  88659D2A 84AFA3E6 211D7B12 141F4142 E87CD711 6C710088 1E9BDC78 9782562F 
+  3DCF4EE5 1489FBEF 21523307 F5F9C02F C2FD04BA 46654FDB 1A228E8B FFDA375C 
+  89C5D42E 149F6F22 0F90C231 6B015AF1 E300D823 CDE66C37 DC0B0AF7 9CAEE0B9 
+  3F425879 02030100 01A35330 51301D06 03551D0E 04160414 4E121817 BF1C151B 
+  11AAB9EE AE5D4666 0BF68FCE 301F0603 551D2304 18301680 144E1218 17BF1C15 
+  1B11AAB9 EEAE5D46 660BF68F CE300F06 03551D13 0101FF04 05300301 01FF300D 
+  06092A86 4886F70D 01010D05 00038201 01007E6D E103D4F6 C00EBF08 9869B9A8 
+  448321BE 53691989 FCD17CEB 8C15AC21 771ED73B FDF3B3EA 7F315913 D9D664CF 
+  B111626A 24F2AF03 C38A2100 77B114AB 5B41E5B5 A2FB472B 972E4ABB 76C21276 
+  EF03F9D1 3FD2FD67 3A5A99E3 E86E39A6 A0E3B0C9 BC9E8BFF F0F0B513 7CCAB7CE 
+  1932948B 2E0E0584 A8E8A8EC 1B80F92F 68847034 AD358EBB D0ECA4CF 83FE9BE9 
+  35D5F87D 0D7EA852 0BF516DE E4A38478 EB375CDB 73A3900A 25E8BC32 3B63B7EF 
+  3876E097 6E21AA0B 0FBB77F3 6CC81C9A B4C67E52 3BAD5D7D F75A0F49 3CF1336F 
+  F0F6BA88 337D2B2A 41C029B6 CCA3619F 3A1B5F65 AE948DFA 52F2DCA3 4079ACF3 
+  3F8717DF B4FC50CC DB6A06DD 61FFD60A F30F
+  	quit
+crypto pki certificate chain SLA-TrustPoint
+ certificate ca 01
+  30820321 30820209 A0030201 02020101 300D0609 2A864886 F70D0101 0B050030 
+  32310E30 0C060355 040A1305 43697363 6F312030 1E060355 04031317 43697363 
+  6F204C69 63656E73 696E6720 526F6F74 20434130 1E170D31 33303533 30313934 
+  3834375A 170D3338 30353330 31393438 34375A30 32310E30 0C060355 040A1305 
+  43697363 6F312030 1E060355 04031317 43697363 6F204C69 63656E73 696E6720 
+  526F6F74 20434130 82012230 0D06092A 864886F7 0D010101 05000382 010F0030 
+  82010A02 82010100 A6BCBD96 131E05F7 145EA72C 2CD686E6 17222EA1 F1EFF64D 
+  CBB4C798 212AA147 C655D8D7 9471380D 8711441E 1AAF071A 9CAE6388 8A38E520 
+  1C394D78 462EF239 C659F715 B98C0A59 5BBB5CBD 0CFEBEA3 700A8BF7 D8F256EE 
+  4AA4E80D DB6FD1C9 60B1FD18 FFC69C96 6FA68957 A2617DE7 104FDC5F EA2956AC 
+  7390A3EB 2B5436AD C847A2C5 DAB553EB 69A9A535 58E9F3E3 C0BD23CF 58BD7188 
+  68E69491 20F320E7 948E71D7 AE3BCC84 F10684C7 4BC8E00F 539BA42B 42C68BB7 
+  C7479096 B4CB2D62 EA2F505D C7B062A4 6811D95B E8250FC4 5D5D5FB8 8F27D191 
+  C55F0D76 61F9A4CD 3D992327 A8BB03BD 4E6D7069 7CBADF8B DF5F4368 95135E44 
+  DFC7C6CF 04DD7FD1 02030100 01A34230 40300E06 03551D0F 0101FF04 04030201 
+  06300F06 03551D13 0101FF04 05300301 01FF301D 0603551D 0E041604 1449DC85 
+  4B3D31E5 1B3E6A17 606AF333 3D3B4C73 E8300D06 092A8648 86F70D01 010B0500 
+  03820101 00507F24 D3932A66 86025D9F E838AE5C 6D4DF6B0 49631C78 240DA905 
+  604EDCDE FF4FED2B 77FC460E CD636FDB DD44681E 3A5673AB 9093D3B1 6C9E3D8B 
+  D98987BF E40CBD9E 1AECA0C2 2189BB5C 8FA85686 CD98B646 5575B146 8DFC66A8 
+  467A3DF4 4D565700 6ADF0F0D CF835015 3C04FF7C 21E878AC 11BA9CD2 55A9232C 
+  7CA7B7E6 C1AF74F6 152E99B7 B1FCF9BB E973DE7F 5BDDEB86 C71E3B49 1765308B 
+  5FB0DA06 B92AFE7F 494E8A9E 07B85737 F3A58BE1 1A48A229 C37C1E69 39F08678 
+  80DDCD16 D6BACECA EEBC7CF9 8428787B 35202CDC 60E4616A B623CDBD 230E3AFB 
+  418616A9 4093E049 4D10AB75 27E86F73 932E35B5 8862FDAE 0275156F 719BB2F0 
+  D697DF7F 28
+  	quit
+crypto pki certificate chain DNAC-CA
+ certificate ca 33604750D02C3661C158730A9B872A9DDF7902F3
+  308203A5 3082028D A0030201 02021433 604750D0 2C3661C1 58730A9B 872A9DDF 
+  7902F330 0D06092A 864886F7 0D01010B 05003062 312D302B 06035504 030C2437 
+  35373438 3263362D 61326366 2D303965 612D6261 30312D37 34636537 32316633 
+  64396231 16301406 0355040A 0C0D4369 73636F20 53797374 656D7331 19301706 
+  0355040B 0C104369 73636F20 444E4120 43656E74 6572301E 170D3236 30323236 
+  32313438 33345A17 0D323831 31323232 31343833 345A3062 312D302B 06035504 
+  030C2437 35373438 3263362D 61326366 2D303965 612D6261 30312D37 34636537 
+  32316633 64396231 16301406 0355040A 0C0D4369 73636F20 53797374 656D7331 
+  19301706 0355040B 0C104369 73636F20 444E4120 43656E74 65723082 0122300D 
+  06092A86 4886F70D 01010105 00038201 0F003082 010A0282 010100F1 A62FF6D0 
+  B08B09B7 644597A8 162C5183 0856A4F5 21BDB5A1 E1948975 D88A16EB A354F33A 
+  AE36B8CF 20859018 9CB84E70 7869DADE 3760B2B2 61AC4DE4 03B67542 CE6B358C 
+  C07E0F84 C2E4DC36 7BCDA147 FD5BC64A CC2AB212 BDF84632 A43E2096 5AE53133 
+  A43F6924 BF64E419 36265F8C 9D149009 33B455E1 E068FC27 98076146 89ED67BB 
+  6FA408C4 6B7E3EB0 F4D52E7B F2ABF663 B110EA1D DAE8FD5E E118C0E2 29D95B60 
+  FAA7C04E 478FE795 8B367868 F922DF0D 784F5EC9 0BA2C47A BAF41139 D2415D3C 
+  354027F7 9D759175 35C7B6F3 BD48695A 260AF925 E2840DB4 E6506CA0 530DC489 
+  D13606AE 6DD20829 93B2B5F5 7732227C C484D407 130D0707 92E17302 03010001 
+  A3533051 301D0603 551D0E04 160414CF AED93921 472A4F3B F6D0117C 0CC571CF 
+  815ADA30 1F060355 1D230418 30168014 CFAED939 21472A4F 3BF6D011 7C0CC571 
+  CF815ADA 300F0603 551D1301 01FF0405 30030101 FF300D06 092A8648 86F70D01 
+  010B0500 03820101 00150636 883A6848 393FAE64 4318E275 31192D95 3567B2B5 
+  9CA03263 D0A9EFD8 A3C1782F 4BC01A5D AA9CBF44 EA0613CD 3715D2F1 AE7119AC 
+  501CA37A A6681F73 FD70F708 252EF3C2 AA07ABDC 135A041F FD8D919D F4F6D66E 
+  3AE3E18A ED327401 E9B97CE5 CAA6844A ECECB3F4 CB79F73F F10BD1F9 588E3172 
+  90B2CAEB 95CA79C9 E185379C 64AAE8AD 039CAD56 10BD9DC4 3C79060D AFDCD970 
+  05D919BF C2490B72 8E282654 93A98193 210EA961 B09EFB7C A1509F74 C581BD1F 
+  234CDE26 38404C56 6B1FF622 9AB4BE9B 9C952EE9 537BEAAA 97A8604E 12E07CD8 
+  B2C898AB 58BBCA2C D1A74786 0D3B15DC A412CE7E 0A525F13 D7C33641 0B53EB5F 
+  5DC2C4F6 A1C037E2 77
+  	quit
+!
+cts authorization list dnac-cts-list
+!
+license boot level network-advantage addon dna-advantage
+service-template DEFAULT_LINKSEC_POLICY_MUST_SECURE
+ linksec policy must-secure
+service-template DEFAULT_LINKSEC_POLICY_SHOULD_SECURE
+ linksec policy should-secure
+service-template DEFAULT_CRITICAL_VOICE_TEMPLATE
+ voice vlan
+service-template DEFAULT_CRITICAL_DATA_TEMPLATE
+service-template webauth-global-inactive
+ inactivity-timer 3600 
+memory free low-watermark processor 74370
+!
+diagnostic bootup level minimal
+!
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+!
+!
+!
+enable secret 9 $9$c1Cl7xVcKhgHa.$8qP9uKIAQI7aYCrm6AgutMEcuqz6Ghmd.xiC1LDnwkc
+!
+username admin privilege 15 secret 9 $9$2P4.RQtEuDZ1zU$BZf6fhvxtkl.2RhIMXhNCTqdK/StalzJtyRR4XZjprE
+!
+redundancy
+ mode sso
+crypto engine compliance shield disable
+!
+!
+!
+!
+!
+!
+class-map match-any system-cpp-police-ewlc-control
+ description EWLC Control 
+class-map match-any system-cpp-police-topology-control
+ description Topology control
+class-map match-any system-cpp-police-sw-forward
+ description Sw forwarding, L2 LVX data packets, LOGGING, Transit Traffic
+class-map match-any system-cpp-default
+ description EWLC Data, Inter FED Traffic 
+class-map match-any system-cpp-police-sys-data
+ description Openflow, Exception, EGR Exception, NFL Sampled Data, RPF Failed
+class-map match-any system-cpp-police-punt-webauth
+ description Punt Webauth
+class-map match-any system-cpp-police-l2lvx-control
+ description L2 LVX control packets
+class-map match-any system-cpp-police-forus
+ description Forus traffic
+class-map match-any system-cpp-police-multicast-end-station
+ description MCAST END STATION
+class-map match-any system-cpp-police-forus-addr-resolution
+ description Forus address resolution
+class-map match-any system-cpp-police-high-rate-app
+ description High Rate Applications 
+class-map match-any system-cpp-police-multicast
+ description MCAST Data
+class-map match-any system-cpp-police-meraki-next-tunnel
+ description Meraki Next tunnel
+class-map match-any system-cpp-police-l2-control
+ description L2 control
+class-map match-any system-cpp-police-dot1x-auth
+ description DOT1X Auth
+class-map match-any system-cpp-police-data
+ description ICMP redirect, ICMP_GEN and BROADCAST
+class-map match-any system-cpp-police-stackwise-virt-control
+ description Stackwise Virtual OOB
+class-map match-any non-client-nrt-class
+class-map match-any system-cpp-police-routing-control
+ description Routing control and Low Latency
+class-map match-any system-cpp-police-protocol-snooping
+ description Protocol snooping
+class-map match-any system-cpp-police-dhcp-snooping
+ description DHCP snooping
+class-map match-any system-cpp-police-ios-routing
+ description L2 control, Topology control, Routing control, Low Latency
+class-map match-any system-cpp-police-system-critical
+ description System Critical and Gold Pkt
+class-map match-any system-cpp-police-ios-feature
+ description ICMPGEN,BROADCAST,ICMP,L2LVXCntrl,ProtoSnoop,PuntWebauth,MCASTData,Transit,DOT1XAuth,Swfwd,LOGGING,L2LVXData,ForusTraffic,ForusARP,McastEndStn,Openflow,Exception,EGRExcption,NflSampled,RpfFailed
+!
+!
+policy-map system-cpp-policy
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface Loopback0
+ ip address 10.1.0.1 255.255.255.255
+!
+interface Loopback1021
+ description Loopback Border
+ vrf forwarding Corp_VN
+ ip address 10.10.20.1 255.255.255.255
+!
+interface GigabitEthernet0/0
+ vrf forwarding Mgmt-vrf
+ ip address 192.168.244.12 255.255.255.0
+ negotiation auto
+!
+interface GigabitEthernet1/0/1
+ no switchport
+ ip address 10.1.1.1 255.255.255.0
+ ip router isis 
+!
+interface GigabitEthernet1/0/2
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/3
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/4
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/5
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/6
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/7
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/8
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/9
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/10
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/11
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/12
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/13
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/14
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/15
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/16
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/17
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/18
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/19
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/20
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/21
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/22
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/23
+ device-tracking attach-policy IPDT_POLICY
+!
+interface GigabitEthernet1/0/24
+ device-tracking attach-policy IPDT_POLICY
+!
+interface Vlan1
+ no ip address
+ shutdown
+!
+router lisp
+ domain-id 4218702598
+ locator-table default
+ service ipv4
+  encapsulation vxlan
+  sgt
+  map-server
+  map-resolver
+  exit-service-ipv4
+ !
+ service ethernet
+  map-server
+  map-resolver
+  exit-service-ethernet
+ !
+ instance-id 4099
+  service ipv4
+   eid-table vrf Corp_VN
+   exit-service-ipv4
+  !
+  exit-instance-id
+ !
+ site site_uci
+  description map-server configured from Catalyst Center
+  authentication-key 7 045A58530E251E1D0D1C5411405F55552C
+  eid-record instance-id 4099 0.0.0.0/0 accept-more-specifics
+  eid-record instance-id 4099 10.10.20.0/24 accept-more-specifics
+  eid-record instance-id 8188 any-mac
+  allow-locator-default-etr instance-id 4099 ipv4
+  exit-site
+ !
+ ipv4 source-locator Loopback0
+ exit-router-lisp
+!
+router isis
+ net 49.0001.0101.0001.00
+ is-type level-2-only
+ metric-style wide
+ passive-interface Loopback0
+!
+ip forward-protocol nd
+ip tcp mss 1280
+ip tcp window-size 212000
+ip http server
+ip http authentication local
+ip http secure-server
+ip http client source-interface GigabitEthernet0/0
+ip route 0.0.0.0 0.0.0.0 192.168.244.4
+ip route vrf Mgmt-vrf 0.0.0.0 0.0.0.0 192.168.244.4
+ip ssh bulk-mode 131072
+ip ssh source-interface GigabitEthernet0/0
+!
+!
+ip access-list extended ACL_WEBAUTH_REDIRECT
+ 30 deny ip any host 192.168.11.250
+ 500 permit tcp any any eq www
+ 600 permit tcp any any eq 443
+ 700 permit tcp any any eq 8443
+ 800 deny udp any any eq domain
+ 900 deny udp any eq bootpc any eq bootps
+ip radius source-interface Loopback0 
+logging source-interface GigabitEthernet0/0 vrf Mgmt-vrf
+logging host 192.168.11.253 vrf Mgmt-vrf
+snmp-server community versa RW
+snmp-server trap-source GigabitEthernet0/0
+snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
+snmp-server enable traps flowmon
+snmp-server enable traps entity-perf throughput-notif
+snmp-server enable traps call-home message-send-fail server-fail
+snmp-server enable traps tty
+snmp-server enable traps eigrp
+snmp-server enable traps ospf state-change
+snmp-server enable traps ospf errors
+snmp-server enable traps ospf retransmit
+snmp-server enable traps ospf lsa
+snmp-server enable traps ospf cisco-specific state-change nssa-trans-change
+snmp-server enable traps ospf cisco-specific state-change shamlink interface
+snmp-server enable traps ospf cisco-specific state-change shamlink neighbor
+snmp-server enable traps ospf cisco-specific errors
+snmp-server enable traps ospf cisco-specific retransmit
+snmp-server enable traps ospf cisco-specific lsa
+snmp-server enable traps bfd
+snmp-server enable traps smart-license
+snmp-server enable traps auth-framework sec-violation
+snmp-server enable traps rep
+snmp-server enable traps aaa_server
+snmp-server enable traps memory bufferpeak
+snmp-server enable traps config-copy
+snmp-server enable traps config
+snmp-server enable traps config-ctid
+snmp-server enable traps energywise
+snmp-server enable traps fru-ctrl
+snmp-server enable traps entity
+snmp-server enable traps flash insertion removal lowspace
+snmp-server enable traps power-ethernet police
+snmp-server enable traps cpu threshold
+snmp-server enable traps syslog
+snmp-server enable traps udld link-fail-rpt
+snmp-server enable traps udld status-change
+snmp-server enable traps vtp
+snmp-server enable traps vlancreate
+snmp-server enable traps vlandelete
+snmp-server enable traps port-security
+snmp-server enable traps envmon
+snmp-server enable traps stackwise
+snmp-server enable traps mvpn
+snmp-server enable traps pw vc
+snmp-server enable traps ipsla
+snmp-server enable traps dhcp
+snmp-server enable traps event-manager
+snmp-server enable traps ike policy add
+snmp-server enable traps ike policy delete
+snmp-server enable traps ike tunnel start
+snmp-server enable traps ike tunnel stop
+snmp-server enable traps ipsec cryptomap add
+snmp-server enable traps ipsec cryptomap delete
+snmp-server enable traps ipsec cryptomap attach
+snmp-server enable traps ipsec cryptomap detach
+snmp-server enable traps ipsec tunnel start
+snmp-server enable traps ipsec tunnel stop
+snmp-server enable traps ipsec too-many-sas
+snmp-server enable traps ospfv3 state-change
+snmp-server enable traps ospfv3 errors
+snmp-server enable traps ipmulticast
+snmp-server enable traps pimstdmib neighbor-loss invalid-register invalid-join-prune rp-mapping-change interface-election
+snmp-server enable traps msdp
+snmp-server enable traps pim neighbor-change rp-mapping-change invalid-pim-message
+snmp-server enable traps bridge newroot topologychange
+snmp-server enable traps stpx inconsistency root-inconsistency loop-inconsistency
+snmp-server enable traps bgp cbgp2 state-changes all backward-trans limited updown-limited
+snmp-server enable traps bgp cbgp2 threshold prefix
+snmp-server enable traps hsrp
+snmp-server enable traps isis
+snmp-server enable traps cef resource-failure peer-state-change peer-fib-state-change inconsistency
+snmp-server enable traps lisp
+snmp-server enable traps nhrp nhs
+snmp-server enable traps nhrp nhc
+snmp-server enable traps nhrp nhp
+snmp-server enable traps nhrp quota-exceeded
+snmp-server enable traps local-auth
+snmp-server enable traps entity-diag boot-up-fail hm-test-recover hm-thresh-reached scheduled-test-fail
+snmp-server enable traps mpls rfc ldp
+snmp-server enable traps mpls ldp
+snmp-server enable traps mpls rfc traffic-eng
+snmp-server enable traps mpls traffic-eng
+snmp-server enable traps mpls fast-reroute protected
+snmp-server enable traps bulkstat collection transfer
+snmp-server enable traps mac-notification change move threshold
+snmp-server enable traps errdisable
+snmp-server enable traps vlan-membership
+snmp-server enable traps transceiver all
+snmp-server enable traps vrfmib vrf-up vrf-down vnet-trunk-up vnet-trunk-down
+snmp-server enable traps rf
+snmp-server enable traps mpls vpn
+snmp-server enable traps mpls rfc vpn
+snmp-server host 192.168.11.253 vrf Mgmt-vrf version 2c versa 
+!
+radius-server attribute 6 on-for-login-auth
+radius-server attribute 6 support-multiple
+radius-server attribute 8 include-in-access-req
+radius-server attribute 25 access-request include
+radius-server attribute 31 mac format ietf upper-case
+radius-server attribute 31 send nas-port-detail mac-only
+radius-server dead-criteria time 5 tries 3
+radius-server deadtime 3
+!
+radius server dnac-radius_192.168.11.250
+ address ipv4 192.168.11.250 auth-port 1812 acct-port 1813
+ timeout 4
+ retransmit 3
+ automate-tester username dummy ignore-acct-port probe-on
+ pac key 7 13331200180D557878
+!
+!
+!
+control-plane
+ service-policy input system-cpp-policy
+!
+!
+!
+line con 0
+ stopbits 1
+line vty 0 4
+ authorization exec VTY_author
+ login authentication VTY_authen
+ transport input ssh
+line vty 5 15
+ authorization exec VTY_author
+ login authentication VTY_authen
+ transport input ssh
+!
+!
+!
+!
+!
+!
+!
+end
