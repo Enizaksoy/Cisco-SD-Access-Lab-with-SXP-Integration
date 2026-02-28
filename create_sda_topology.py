@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'scripts'))
+from creds import CATCENTER_PASS
 """
 Create SD-Access Fabric Topology in CML
 - 4x Cat9Kv UADP (Border, CP, Edge-1, Edge-2)
@@ -21,7 +24,7 @@ if sys.platform == 'win32':
 # CML Server
 CML_HOST = "192.168.48.156"
 USERNAME = "admin"
-PASSWORD = "Elma12743??"
+PASSWORD = CATCENTER_PASS
 
 # SSL context (ignore self-signed cert)
 ctx = ssl.create_default_context()
@@ -63,8 +66,8 @@ interface GigabitEthernet1
 !
 ip route 0.0.0.0 0.0.0.0 192.168.244.4
 !
-enable secret Elma12743??
-username admin privilege 15 secret Elma12743??
+enable secret {CML_PASS}
+username admin privilege 15 secret {CML_PASS}
 !
 line vty 0 15
  login local
@@ -87,8 +90,8 @@ interface GigabitEthernet1
 !
 ip route 0.0.0.0 0.0.0.0 192.168.244.4
 !
-enable secret Elma12743??
-username admin privilege 15 secret Elma12743??
+enable secret {CML_PASS}
+username admin privilege 15 secret {CML_PASS}
 !
 line vty 0 15
  login local
@@ -111,8 +114,8 @@ interface GigabitEthernet1
 !
 ip route 0.0.0.0 0.0.0.0 192.168.244.4
 !
-enable secret Elma12743??
-username admin privilege 15 secret Elma12743??
+enable secret {CML_PASS}
+username admin privilege 15 secret {CML_PASS}
 !
 line vty 0 15
  login local
@@ -135,8 +138,8 @@ interface GigabitEthernet1
 !
 ip route 0.0.0.0 0.0.0.0 192.168.244.4
 !
-enable secret Elma12743??
-username admin privilege 15 secret Elma12743??
+enable secret {CML_PASS}
+username admin privilege 15 secret {CML_PASS}
 !
 line vty 0 15
  login local

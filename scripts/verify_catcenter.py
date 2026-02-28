@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from creds import CATCENTER_PASS
 """Catalyst Center Verification Script
 Checks fabric site, VN, IP pools, anycast gateways, ISE integration via API.
 """
@@ -9,7 +10,7 @@ import json, urllib.request, ssl, base64
 
 CATCENTER_IP = '192.168.11.254'
 USERNAME = 'admin'
-PASSWORD = 'Elma12743??'
+PASSWORD = CATCENTER_PASS
 
 ctx = ssl.create_default_context()
 ctx.check_hostname = False

@@ -3,12 +3,13 @@ if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 from netmiko import ConnectHandler
 
+from creds import CSR_PASS, CSR_SECRET, CSR_USER
 csr = {
     'device_type': 'cisco_ios',
     'host': '192.168.244.16',
-    'username': 'admin',
-    'password': 'Versa@123',
-    'secret': 'Versa@123',
+    'username': CSR_USER,
+    'password': CSR_PASS,
+    'secret': CSR_SECRET,
     'timeout': 45,
     'auth_timeout': 45,
 }
@@ -16,9 +17,9 @@ csr = {
 border = {
     'device_type': 'cisco_ios',
     'host': '192.168.244.11',
-    'username': 'netadmin',
-    'password': 'Versa@123',
-    'secret': 'Versa@123',
+    'username': SWITCH_USER,
+    'password': CSR_PASS,
+    'secret': CSR_SECRET,
     'timeout': 45,
     'auth_timeout': 45,
 }

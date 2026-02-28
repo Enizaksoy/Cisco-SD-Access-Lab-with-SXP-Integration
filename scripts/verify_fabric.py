@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from creds import SWITCH_PASS
 """SD-Access Fabric Verification Script
 Checks IS-IS, LISP, VXLAN, VRF, and anycast gateway status on all fabric nodes.
 """
@@ -38,7 +39,7 @@ def main():
                 device_type='cisco_ios',
                 host=sw['host'],
                 username='admin',
-                password='Versa@123',
+                password=SWITCH_PASS,
                 timeout=20,
             )
             for label, cmd in COMMANDS:

@@ -4,8 +4,9 @@ if sys.platform == 'win32':
 urllib3.disable_warnings()
 from netmiko import ConnectHandler
 
+from creds import CSR_PASS, CSR_SECRET, CSR_USER, ISE_PASS, ISE_USER
 ISE = 'https://192.168.11.250:9060'
-ISE_AUTH = ('admin', 'Elma12743??')
+ISE_AUTH = (ISE_USER, ISE_PASS)
 HEADERS = {'Content-Type': 'application/json', 'Accept': 'application/json'}
 
 # ============ Step 1: CSR needs a Loopback for SXP source ============
@@ -16,9 +17,9 @@ print("=" * 60)
 csr = {
     'device_type': 'cisco_ios',
     'host': '192.168.244.16',
-    'username': 'admin',
-    'password': 'Versa@123',
-    'secret': 'Versa@123',
+    'username': CSR_USER,
+    'password': CSR_PASS,
+    'secret': CSR_SECRET,
     'timeout': 45,
     'auth_timeout': 45,
 }

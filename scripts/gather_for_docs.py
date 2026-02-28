@@ -4,14 +4,15 @@ if sys.platform == 'win32':
 
 from netmiko import ConnectHandler
 
+from creds import SWITCH_PASS, SWITCH_SECRET, SWITCH_USER
 SWITCHES = [
     {
         'name': 'SDA-Edge1',
         'device_type': 'cisco_ios',
         'host': '192.168.244.13',
-        'username': 'netadmin',
-        'password': 'Versa@123',
-        'secret': 'Versa@123',
+        'username': SWITCH_USER,
+        'password': SWITCH_PASS,
+        'secret': SWITCH_SECRET,
         'timeout': 45,
         'auth_timeout': 45,
     },
@@ -19,9 +20,9 @@ SWITCHES = [
         'name': 'SDA-Edge2',
         'device_type': 'cisco_ios',
         'host': '192.168.244.14',
-        'username': 'netadmin',
-        'password': 'Versa@123',
-        'secret': 'Versa@123',
+        'username': SWITCH_USER,
+        'password': SWITCH_PASS,
+        'secret': SWITCH_SECRET,
         'timeout': 45,
         'auth_timeout': 45,
     },

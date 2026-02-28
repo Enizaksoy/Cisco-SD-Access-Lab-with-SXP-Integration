@@ -17,33 +17,29 @@ csr = {
 conn = ConnectHandler(**csr)
 conn.enable()
 
-print("--- Current G3 config ---")
-print(conn.send_command("show running-config interface GigabitEthernet3"))
+# Check current SXP mappings first
+print("--- Current SXP mappings ---")
+print(conn.send_command("show cts sxp sgt-map brief"))
 
-# Configure G3 with IP and CTS inline tagging
+# Enable sgt-caching on G2 ingress so CSR resolves source IP to SGT
+print("\n--- Enabling cts role-based sgt-map on G2 ---")
 cmds = [
-    'interface GigabitEthernet3',
-    'ip address 10.1.200.1 255.255.255.0',
-    'no shutdown',
-    'cts manual',
-    'policy static sgt 2 trusted',
-    'propagate sgt',
+    'interface GigabitEthernet2',
+    'cts role-based sgt-map sgt-caching',
     'exit',
-    'exit',
-    # Enable CTS role-based enforcement globally
-    'cts role-based enforcement',
 ]
 out = conn.send_config_set(cmds, cmd_verify=False)
 print(out)
 
-print("\n--- New G3 config ---")
-print(conn.send_command("show running-config interface GigabitEthernet3"))
+# Verify
+print("\n--- show cts interface G2 ---")
+print(conn.send_command("show cts interface GigabitEthernet2"))
 
 print("\n--- show cts interface G3 ---")
 print(conn.send_command("show cts interface GigabitEthernet3"))
 
-print("\n--- show cts interface summary ---")
-print(conn.send_command("show cts interface summary"))
+print("\n--- show cts role-based sgt-map all ---")
+print(conn.send_command("show cts role-based sgt-map all"))
 
 conn.disconnect()
 print("\nDone.")

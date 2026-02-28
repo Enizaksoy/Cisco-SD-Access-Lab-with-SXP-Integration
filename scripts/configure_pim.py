@@ -3,6 +3,7 @@ if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 from netmiko import ConnectHandler
 
+from creds import SWITCH_PASS, SWITCH_SECRET, SWITCH_USER
 switches = {
     'SDA-Border': {'host': '192.168.244.11', 'lo0': '10.1.0.2'},
     'SDA-CP':     {'host': '192.168.244.12', 'lo0': '10.1.0.1'},
@@ -17,8 +18,8 @@ for name, info in switches.items():
     print(f"=== {name} ({info['host']}) ===")
     print(f"{'='*60}")
     
-    conn = ConnectHandler(device_type='cisco_ios', host=info['host'], username='netadmin',
-                          password='Versa@123', secret='Versa@123', timeout=45, auth_timeout=45)
+    conn = ConnectHandler(device_type='cisco_ios', host=info['host'], username=SWITCH_USER,
+                          password=SWITCH_PASS, secret=SWITCH_SECRET, timeout=45, auth_timeout=45)
     conn.enable()
 
     cmds = [
@@ -50,8 +51,8 @@ time.sleep(15)
 
 print(f"\n{'='*60}")
 print("=== Re-checking PIM neighbors on Edge1 ===")
-conn = ConnectHandler(device_type='cisco_ios', host='192.168.244.13', username='netadmin',
-                      password='Versa@123', secret='Versa@123', timeout=45, auth_timeout=45)
+conn = ConnectHandler(device_type='cisco_ios', host='192.168.244.13', username=SWITCH_USER,
+                      password=SWITCH_PASS, secret=SWITCH_SECRET, timeout=45, auth_timeout=45)
 conn.enable()
 print(conn.send_command("show ip pim neighbor"))
 print("\n--- Multicast route for 239.0.17.1 ---")

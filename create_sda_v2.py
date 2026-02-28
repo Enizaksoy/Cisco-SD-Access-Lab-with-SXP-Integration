@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'scripts'))
+from creds import CATCENTER_PASS
 """Create SD-Access topology with unique serial numbers via vswitch.xml"""
 import sys, json, urllib.request, ssl
 
@@ -7,7 +10,7 @@ if sys.platform == 'win32':
 
 CML_HOST = "192.168.48.156"
 USERNAME = "admin"
-PASSWORD = "Elma12743??"
+PASSWORD = CATCENTER_PASS
 
 ctx = ssl.create_default_context()
 ctx.check_hostname = False
@@ -40,8 +43,8 @@ interface GigabitEthernet0/0
 !
 ip route 0.0.0.0 0.0.0.0 192.168.244.4
 !
-enable secret Elma12743??
-username admin privilege 15 secret Elma12743??
+enable secret {CML_PASS}
+username admin privilege 15 secret {CML_PASS}
 !
 line vty 0 15
  login local

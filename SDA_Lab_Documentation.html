@@ -546,7 +546,7 @@ pre {
         <tr><td><span class="badge badge-green">SDA-Edge2</span></td><td>192.168.244.14</td><td>10.1.0.4</td><td>10.1.1.4</td><td>CMLUADP004</td></tr>
     </table>
     <div class="card">
-        <p><strong>SSH Access:</strong> <code>netadmin / Versa@123</code> (RADIUS via ISE) &middot; <strong>Enable:</strong> <code>Versa@123</code><br>
+        <p><strong>SSH Access:</strong> <code>netadmin / &lt;password&gt;</code> (RADIUS via ISE) &middot; <strong>Enable:</strong> <code>&lt;password&gt;</code><br>
         Gi0/0 in Mgmt-vrf &middot; 18GB RAM each &middot; RADIUS authenticates at privilege level 1, use <code>enable</code> for priv 15</p>
     </div>
 
@@ -556,21 +556,21 @@ pre {
             <h4>Catalyst Center</h4>
             <p>IP: <code>192.168.11.254</code><br>
                Version: 2.3.7.10<br>
-               Admin: <code>admin / Elma12743??</code><br>
+               Admin: <code>admin / &lt;password&gt;</code><br>
                Platform: Kubernetes/Maglev</p>
         </div>
         <div class="card">
             <h4>Cisco ISE 3.5</h4>
             <p>IP: <code>192.168.11.250</code><br>
                FQDN: ISE.mylab.com<br>
-               Admin: <code>admin / Elma12743??</code><br>
+               Admin: <code>admin / &lt;password&gt;</code><br>
                Services: Session, Profiler, SXP, DeviceAdmin, pxGrid</p>
         </div>
         <div class="card">
             <h4>CML Server</h4>
             <p>IP: <code>192.168.48.156</code><br>
                Lab ID: <code>eecd140b-...</code><br>
-               Admin: <code>admin / Elma12743??</code><br>
+               Admin: <code>admin / &lt;password&gt;</code><br>
                Bare Metal (Lenovo P920)</p>
         </div>
     </div>
@@ -1254,11 +1254,11 @@ There are no SXP Connections.</pre>
     <h3>ISE Internal Users</h3>
     <table>
         <tr><th>Username</th><th>Password</th><th>Identity Group</th><th>Purpose</th></tr>
-        <tr><td>netadmin</td><td>Versa@123</td><td>Employee</td><td>Switch SSH admin access</td></tr>
+        <tr><td>netadmin</td><td>&lt;password&gt;</td><td>Employee</td><td>Switch SSH admin access</td></tr>
         <tr><td>versa</td><td>Cisco@1234</td><td>Employee</td><td>Alternate admin</td></tr>
-        <tr><td>User_1, User_2, User_3</td><td>Versa@123</td><td>Employees_Group</td><td>802.1X &rarr; VLAN 1022, SGT Employees(4)</td></tr>
-        <tr><td>User_4, User_5, User_6</td><td>Versa@123</td><td>Contractors_Group</td><td>802.1X &rarr; VLAN 1023, SGT Contractors(5)</td></tr>
-        <tr><td>User_7 ... User_10</td><td>Versa@123</td><td>Guests_Group</td><td>802.1X &rarr; VLAN 1024, SGT Guests(6)</td></tr>
+        <tr><td>User_1, User_2, User_3</td><td>&lt;password&gt;</td><td>Employees_Group</td><td>802.1X &rarr; VLAN 1022, SGT Employees(4)</td></tr>
+        <tr><td>User_4, User_5, User_6</td><td>&lt;password&gt;</td><td>Contractors_Group</td><td>802.1X &rarr; VLAN 1023, SGT Contractors(5)</td></tr>
+        <tr><td>User_7 ... User_10</td><td>&lt;password&gt;</td><td>Guests_Group</td><td>802.1X &rarr; VLAN 1024, SGT Guests(6)</td></tr>
     </table>
     <p><em>Note: ISE password policy prevents passwords from containing the username (case-insensitive).</em></p>
 
@@ -1283,7 +1283,7 @@ There are no SXP Connections.</pre>
         <p><strong>Policy Set:</strong> Default (enabled)<br>
         <strong>Authentication:</strong> All_User_ID_Stores<br>
         <strong>Authorization:</strong> Permit_Admin_Access rule for Employee group (Default Shell Profile)<br>
-        <strong>Note:</strong> SSH login lands at privilege level 1. Use <code>enable</code> with secret <code>Versa@123</code> for priv 15.</p>
+        <strong>Note:</strong> SSH login lands at privilege level 1. Use <code>enable</code> with secret <code>&lt;password&gt;</code> for priv 15.</p>
     </div>
 
     <h3>ISE Identity Groups</h3>
@@ -2031,8 +2031,8 @@ dev = {
     'device_type': 'cisco_ios',
     'host': '192.168.244.11',  # Change per switch
     'username': 'netadmin',     # ISE internal user
-    'password': 'Versa@123',
-    'secret': 'Versa@123',     # Enable secret
+    'password': '&lt;password&gt;',
+    'secret': '&lt;password&gt;',     # Enable secret
     'timeout': 45,
     'auth_timeout': 45,
 }
@@ -2095,7 +2095,7 @@ conn.enable()   # RADIUS lands at priv 1, must enable for priv 15</pre>
         <div class="timeline-item done">Static IP-SGT mappings created on ISE (172.16.100.10-50 + test entries)</div>
         <div class="timeline-item done">3 new IP sub-pools: Employees (10.10.21.0/24), Contractors (10.10.22.0/24), Guests (10.10.23.0/24)</div>
         <div class="timeline-item done">3 new Anycast Gateways: Employees_VLAN (1022), Contractors_VLAN (1023), Guests_VLAN (1024)</div>
-        <div class="timeline-item done">Cat Center device credentials updated to netadmin/Versa@123</div>
+        <div class="timeline-item done">Cat Center device credentials updated to netadmin/&lt;password&gt;</div>
         <div class="timeline-item done">Edge switches reprovisioned with new VLAN/SVI config</div>
         <div class="timeline-item done">ISE Identity Groups created (Employees_Group, Contractors_Group, Guests_Group)</div>
         <div class="timeline-item done">Users reassigned: User_1-3 &rarr; Employees, User_4-6 &rarr; Contractors, User_7-10 &rarr; Guests</div>
