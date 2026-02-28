@@ -368,6 +368,13 @@ pre {
         <a class="nav-item" data-section="aaa">AAA / RADIUS / 802.1X</a>
         <a class="nav-item" data-section="ise">ISE Integration</a>
         <a class="nav-item" data-section="sxp">SXP / SGT</a>
+        <a class="nav-item" data-section="sgt-fabric">SGT in Fabric</a>
+    </div>
+    <div class="nav-section">
+        <div class="nav-label">Data Plane</div>
+        <a class="nav-item" data-section="forwarding">Fabric Forwarding</a>
+        <a class="nav-item" data-section="pim">PIM / Multicast</a>
+        <a class="nav-item" data-section="walkthrough">Packet Walkthrough</a>
     </div>
     <div class="nav-section">
         <div class="nav-label">Operations</div>
@@ -1449,11 +1456,517 @@ cts role-based enforcement vlan-list 1021-1024</pre>
         <tr><td>1</td><td>ISE authorization profiles (dynamic VLAN + SGT per group)</td><td><span class="badge badge-green">DONE</span></td></tr>
         <tr><td>2</td><td>ISE authorization policies (user &rarr; profile mapping)</td><td><span class="badge badge-green">DONE</span></td></tr>
         <tr><td>3</td><td>802.1X tested with Windows PCs on Edge Gi1/0/5 (dynamic VLAN + SGT working)</td><td><span class="badge badge-green">DONE</span></td></tr>
-        <tr><td>4</td><td>Add Cisco CSR router to CML topology (external to fabric)</td><td><span class="badge badge-orange">TODO</span></td></tr>
-        <tr><td>5</td><td>Configure Border as SXP Speaker to CSR router</td><td><span class="badge badge-orange">TODO</span></td></tr>
-        <tr><td>6</td><td>Configure SGT-based ACLs (SGACL) on CSR router</td><td><span class="badge badge-orange">TODO</span></td></tr>
-        <tr><td>7</td><td>Add Versa FlexVNF and verify IP-SGT propagation end-to-end</td><td><span class="badge badge-orange">TODO</span></td></tr>
+        <tr><td>4</td><td>Add Cisco CSR router to CML topology (external to fabric)</td><td><span class="badge badge-green">DONE</span></td></tr>
+        <tr><td>5</td><td>ISE SXP Speaker to CSR (10 IP-SGT mappings received)</td><td><span class="badge badge-green">DONE</span></td></tr>
+        <tr><td>6</td><td>CSR inline SGT tagging on G2/G3 (CTS manual + propagate sgt)</td><td><span class="badge badge-green">DONE</span></td></tr>
+        <tr><td>7</td><td>Configure SGT-based ACLs (SGACL) on CSR router</td><td><span class="badge badge-orange">TODO</span></td></tr>
+        <tr><td>8</td><td>Add Versa FlexVNF and verify IP-SGT propagation end-to-end</td><td><span class="badge badge-orange">TODO</span></td></tr>
     </table>
+</div>
+
+<!-- SGT IN FABRIC -->
+<div class="section" id="sgt-fabric">
+    <h2>SGT Propagation Inside the Fabric</h2>
+
+    <div class="card">
+        <h3>Key Concept: No SXP Needed Inside SD-Access</h3>
+        <p>Within the SD-Access fabric, SGT propagation is handled entirely by <strong>LISP + VXLAN-GPO</strong>. SXP is only needed for devices <em>outside</em> the fabric (e.g., CSR router, Versa FlexVNF).</p>
+    </div>
+
+    <h3>SGT Assignment Flow</h3>
+    <div class="card">
+        <pre style="color: var(--accent-cyan);">
+  [Host] --802.1X--&gt; [Edge Switch] --RADIUS--&gt; [ISE]
+                                                 |
+                                          SGT assigned via
+                                          Authorization Profile
+                                                 |
+                                          RADIUS Access-Accept
+                                          + VLAN + SGT
+                                                 |
+  [Edge Switch] &lt;--- SGT = 5 (Contractors) -----+
+       |
+       |  1. Local CTS IP-SGT binding created
+       |  2. LISP map-register to CP includes SGT
+       |  3. VXLAN-GPO header carries SGT at encap time
+        </pre>
+    </div>
+
+    <h3>Three SGT Transport Methods</h3>
+    <table>
+        <tr><th>Method</th><th>Where</th><th>How</th><th>Protocol</th></tr>
+        <tr><td><strong>LISP + VXLAN-GPO</strong></td><td>Inside fabric (edge &harr; edge)</td><td>Inline, automatic</td><td>VXLAN Group Policy Option header</td></tr>
+        <tr><td><strong>SXP</strong></td><td>Outside fabric (ISE &rarr; external devices)</td><td>Out-of-band IP-SGT table</td><td>TCP-based peer connection</td></tr>
+        <tr><td><strong>RADIUS</strong></td><td>ISE &rarr; Edge (during authentication)</td><td>Per-host SGT assignment</td><td>RADIUS Access-Accept attributes</td></tr>
+    </table>
+
+    <h3>Ingress vs Egress Enforcement Model</h3>
+    <div class="card">
+        <pre style="color: var(--accent-cyan);">
+  Source Host           Ingress Edge              Egress Edge           Dest Host
+  (SGT:5)             (Encapsulates)            (Enforces)             (SGT:6)
+     |                      |                        |                    |
+     |--- Packet ---&gt;       |                        |                    |
+     |                [Stamps src SGT:5     [Reads src SGT:5 from        |
+     |                 in VXLAN-GPO header]  VXLAN-GPO header]           |
+     |                      |               [Knows dst SGT:6 from       |
+     |                      |                local CTS binding]         |
+     |                      |--- VXLAN ---&gt; [SGACL: src:5 &rarr; dst:6]     |
+     |                      |               [Permit/Deny decision] --&gt;  |
+        </pre>
+        <p><strong>Ingress edge</strong>: Knows only source SGT (from local RADIUS/CTS). Stamps it in VXLAN-GPO header. Does NOT enforce policy.</p>
+        <p><strong>Egress edge</strong>: Reads source SGT from VXLAN header + knows destination SGT from local CTS binding. Has both SGTs &rarr; enforces SGACL.</p>
+    </div>
+
+    <h3>SGACL Configuration (Role-Based ACL)</h3>
+    <span class="config-label">Local switch SGACL example</span>
+    <pre>! Define role-based ACL
+ip access-list role-based PERMIT_ICMP_ONLY
+  permit icmp
+  deny ip
+
+! Apply between source SGT &rarr; destination SGT
+cts role-based permissions from 5 to 6 PERMIT_ICMP_ONLY
+
+! Or via ISE: TrustSec &rarr; SGACL Matrix (auto-downloaded)</pre>
+
+    <h3>LISP <code>sgt</code> Keyword</h3>
+    <div class="card">
+        <p>The <code>sgt</code> keyword under <code>router lisp &gt; service ipv4</code> enables SGT metadata in LISP map registrations and map-replies:</p>
+        <pre>router lisp
+ service ipv4
+  encapsulation vxlan
+  sgt              &lt;-- enables SGT in LISP control plane
+  etr</pre>
+    </div>
+
+    <h3>Verification</h3>
+    <span class="config-label">SDA-Edge1 - CTS SGT Map</span>
+    <pre>SDA-Edge1# show cts role-based sgt-map vrf Corp_VN all
+Active IPv4-SGT Bindings Information
+
+IP Address              SGT     Source
+============================================
+10.10.20.1              2       INTERNAL
+10.10.21.1              2       INTERNAL
+10.10.22.1              2       INTERNAL
+10.10.22.2              5       LOCAL      &lt;-- Contractors (from 802.1X)
+10.10.23.1              2       INTERNAL</pre>
+
+    <span class="config-label">SDA-Edge2 - CTS SGT Map</span>
+    <pre>SDA-Edge2# show cts role-based sgt-map vrf Corp_VN all
+Active IPv4-SGT Bindings Information
+
+IP Address              SGT     Source
+============================================
+10.10.20.1              2       INTERNAL
+10.10.21.1              2       INTERNAL
+10.10.22.1              2       INTERNAL
+10.10.22.128            5       LOCAL      &lt;-- Contractors (from 802.1X)
+10.10.23.1              2       INTERNAL</pre>
+
+    <span class="config-label">Current SGACL Policy (default permit all)</span>
+    <pre>SDA-Edge1# show cts role-based permissions
+IPv4 Role-based permissions default:
+	Permit IP-00                &lt;-- Downloaded from ISE, permits all SGT-to-SGT traffic</pre>
+</div>
+
+<!-- PIM / MULTICAST -->
+<div class="section" id="pim">
+    <h2>PIM / Multicast Underlay</h2>
+
+    <div class="card">
+        <h3>Why PIM Is Required</h3>
+        <p>The LISP L2 ethernet service uses <code>broadcast-underlay 239.0.17.1</code> for flooding BUM traffic (Broadcast, Unknown Unicast, Multicast) between edge switches. This requires a functional multicast underlay with PIM.</p>
+        <p><strong>Without PIM</strong>: ARP broadcasts cannot be flooded between edges &rarr; hosts on different edges cannot resolve each other's MAC addresses &rarr; VXLAN data plane cannot forward unicast traffic.</p>
+        <p><strong>Note</strong>: Catalyst Center does NOT push PIM configuration. It must be added manually.</p>
+    </div>
+
+    <h3>Configuration (All 4 Switches)</h3>
+    <span class="config-label">Applied to Border, CP, Edge1, Edge2</span>
+    <pre>ip multicast-routing
+ip pim rp-address 10.1.0.2          ! Border Loopback0 as RP
+
+interface Loopback0
+ ip pim sparse-mode
+
+interface GigabitEthernet1/0/1
+ ip pim sparse-mode</pre>
+
+    <h3>PIM Neighbors</h3>
+    <span class="config-label">SDA-Edge1</span>
+    <pre>SDA-Edge1# show ip pim neighbor
+Neighbor          Interface                Uptime/Expires    Ver   DR
+Address                                                            Prio/Mode
+10.1.1.4          GigabitEthernet1/0/1     00:04:11/00:01:29 v2    1 / DR S P G
+10.1.1.2          GigabitEthernet1/0/1     00:04:17/00:01:29 v2    1 / S P G
+10.1.1.1          GigabitEthernet1/0/1     00:04:17/00:01:29 v2    1 / S P G</pre>
+
+    <h3>Multicast Route for LISP Underlay</h3>
+    <span class="config-label">SDA-Edge1 - mroute 239.0.17.1</span>
+    <pre>SDA-Edge1# show ip mroute 239.0.17.1
+(*, 239.0.17.1), RP 10.1.0.2, flags: SJCF
+  Incoming interface: GigabitEthernet1/0/1, RPF nbr 10.1.1.2
+  Outgoing interface list:
+    L2LISP0.8191, Forward/Sparse-Dense    &lt;-- Guests VLAN 1024
+    L2LISP0.8190, Forward/Sparse-Dense    &lt;-- Contractors VLAN 1023
+    L2LISP0.8189, Forward/Sparse-Dense    &lt;-- Employees VLAN 1022
+    L2LISP0.8188, Forward/Sparse-Dense    &lt;-- Corp VLAN 1021</pre>
+
+    <h3>IGMP Membership</h3>
+    <span class="config-label">SDA-Edge1</span>
+    <pre>SDA-Edge1# show ip igmp groups 239.0.17.1
+Group Address    Interface                Uptime    Expires   Last Reporter
+239.0.17.1       L2LISP0.8191             00:09:43  stopped   10.1.0.3
+239.0.17.1       L2LISP0.8190             00:09:43  stopped   10.1.0.3
+239.0.17.1       L2LISP0.8189             00:09:43  stopped   10.1.0.3
+239.0.17.1       L2LISP0.8188             00:09:43  stopped   10.1.0.3</pre>
+
+    <div class="card">
+        <h3>Broadcast-Underlay to VLAN Mapping</h3>
+        <table>
+            <tr><th>LISP Instance ID</th><th>L2LISP Interface</th><th>VLAN</th><th>Multicast Group</th></tr>
+            <tr><td>8188</td><td>L2LISP0.8188</td><td>1021 (Corp)</td><td>239.0.17.1</td></tr>
+            <tr><td>8189</td><td>L2LISP0.8189</td><td>1022 (Employees)</td><td>239.0.17.1</td></tr>
+            <tr><td>8190</td><td>L2LISP0.8190</td><td>1023 (Contractors)</td><td>239.0.17.1</td></tr>
+            <tr><td>8191</td><td>L2LISP0.8191</td><td>1024 (Guests)</td><td>239.0.17.1</td></tr>
+        </table>
+    </div>
+</div>
+
+<!-- FABRIC FORWARDING -->
+<div class="section" id="forwarding">
+    <h2>Fabric Forwarding Tables</h2>
+
+    <p>Per-device routing, LISP map-cache, CEF, MAC, and ARP tables showing how the fabric forwards traffic between edge switches.</p>
+
+    <h3>SDA-Edge1 (10.1.0.3) - Locator/RLOC</h3>
+
+    <h4>LISP IPv4 Map-Cache (Instance 4099 / Corp_VN)</h4>
+    <span class="config-label">show lisp instance-id 4099 ipv4 map-cache</span>
+    <pre>LISP IPv4 Mapping Cache for EID-table vrf Corp_VN (IID 4099), 6 entries
+
+0.0.0.0/0, via static-send-map-request
+  Negative cache entry, action: send-map-request
+10.10.20.0/24, via dynamic-EID, send-map-request     &lt;-- Local EID range
+  Negative cache entry, action: send-map-request
+10.10.21.0/24, via dynamic-EID, send-map-request     &lt;-- Local EID range
+  Negative cache entry, action: send-map-request
+10.10.22.0/24, via dynamic-EID, send-map-request     &lt;-- Local EID range
+  Negative cache entry, action: send-map-request
+10.10.22.128/32, via map-reply, complete              &lt;-- REMOTE host on Edge2
+  Locator   Uptime    State  Pri/Wgt     Encap-IID
+  10.1.0.4  00:19:04  up      10/10        -         &lt;-- Edge2 RLOC
+10.10.23.0/24, via dynamic-EID, send-map-request
+  Negative cache entry, action: send-map-request</pre>
+
+    <h4>LISP IPv4 Database (Local Registrations)</h4>
+    <span class="config-label">show lisp instance-id 4099 ipv4 database</span>
+    <pre>LISP ETR IPv4 Mapping Database for vrf Corp_VN (IID 4099)
+Entries total 5, no-route 0, inactive 0, do-not-register 4
+
+10.10.20.1/32, dynamic-eid Corp_VLAN-IPV4, do not register      &lt;-- Anycast GW
+  Locator   Pri/Wgt  Source     State
+  10.1.0.3   10/10   cfg-intf   site-self, reachable
+10.10.21.1/32, dynamic-eid Employees_VLAN-IPV4, do not register  &lt;-- Anycast GW
+10.10.22.1/32, dynamic-eid Contractors_VLAN-IPV4, do not register
+10.10.22.2/32, dynamic-eid Contractors_VLAN-IPV4                 &lt;-- Host (registered)
+  Locator   Pri/Wgt  Source     State
+  10.1.0.3   10/10   cfg-intf   site-self, reachable
+10.10.23.1/32, dynamic-eid Guests_VLAN-IPV4, do not register</pre>
+
+    <h4>CEF Forwarding</h4>
+    <span class="config-label">show ip cef vrf Corp_VN</span>
+    <pre>SDA-Edge1# show ip cef vrf Corp_VN 10.10.22.128
+10.10.22.128/32
+  nexthop 10.1.0.4 LISP0.4099              &lt;-- Remote: LISP encap to Edge2
+
+SDA-Edge1# show ip cef vrf Corp_VN 10.10.22.2
+10.10.22.2/32
+  nexthop 10.10.22.2 Vlan1023              &lt;-- Local: direct on Vlan1023</pre>
+
+    <h4>VRF Routing Table</h4>
+    <span class="config-label">show ip route vrf Corp_VN</span>
+    <pre>Routing Table: Corp_VN
+C     10.10.20.0/24 is directly connected, Vlan1021
+L     10.10.20.1/32 is directly connected, Vlan1021
+C     10.10.21.0/24 is directly connected, Vlan1022
+L     10.10.21.1/32 is directly connected, Vlan1022
+C     10.10.22.0/24 is directly connected, Vlan1023
+L     10.10.22.1/32 is directly connected, Vlan1023
+l     10.10.22.2/32 [10/1] via 10.10.22.2, Vlan1023   &lt;-- LISP dynamic-EID (local host)
+C     10.10.23.0/24 is directly connected, Vlan1024
+L     10.10.23.1/32 is directly connected, Vlan1024</pre>
+
+    <h4>L2 LISP MAC Map-Cache (Instance 8190 / VLAN 1023)</h4>
+    <span class="config-label">show lisp instance-id 8190 ethernet map-cache</span>
+    <pre>LISP MAC Mapping Cache for EID-table Vlan 1023 (IID 8190), 1 entries
+
+5254.0051.8d70/48, via map-reply, complete            &lt;-- Windows0 MAC (remote, on Edge2)
+  Locator   Uptime    State  Pri/Wgt     Encap-IID
+  10.1.0.4  00:03:19  up      10/10        -</pre>
+
+    <h4>MAC Address Table (VLAN 1023)</h4>
+    <span class="config-label">show mac address-table vlan 1023</span>
+    <pre>Vlan    Mac Address       Type        Ports
+----    -----------       --------    -----
+1023    0000.0c9f.f1d6    STATIC      Vl1023         &lt;-- Anycast GW MAC
+1023    5254.0078.0e64    STATIC      Vl1023         &lt;-- SVI MAC
+1023    5254.00dc.21bf    STATIC      Gi1/0/5        &lt;-- Windows1 (LOCAL)
+1023    5254.0051.8d70    CP_LEARN    L2LI0          &lt;-- Windows0 (REMOTE via LISP)</pre>
+
+    <h4>ARP Table (Corp_VN)</h4>
+    <span class="config-label">show ip arp vrf Corp_VN</span>
+    <pre>Protocol  Address          Age (min)  Hardware Addr   Type   Interface
+Internet  10.10.22.1              -   0000.0c9f.f1d6  ARPA   Vlan1023   &lt;-- Anycast GW
+Internet  10.10.22.2              3   5254.00dc.21bf  ARPA   Vlan1023   &lt;-- Windows1 (local)</pre>
+
+    <hr style="border-color: var(--border); margin: 30px 0;">
+
+    <h3>SDA-Edge2 (10.1.0.4) - Locator/RLOC</h3>
+
+    <h4>LISP IPv4 Map-Cache (Instance 4099 / Corp_VN)</h4>
+    <span class="config-label">show lisp instance-id 4099 ipv4 map-cache</span>
+    <pre>LISP IPv4 Mapping Cache for EID-table vrf Corp_VN (IID 4099), 6 entries
+
+0.0.0.0/0, via static-send-map-request
+  Negative cache entry, action: send-map-request
+10.10.20.0/24, via dynamic-EID, send-map-request
+  Negative cache entry, action: send-map-request
+10.10.21.0/24, via dynamic-EID, send-map-request
+  Negative cache entry, action: send-map-request
+10.10.22.0/24, via dynamic-EID, send-map-request
+  Negative cache entry, action: send-map-request
+10.10.22.2/32, via map-reply, complete                &lt;-- REMOTE host on Edge1
+  Locator   Uptime    State  Pri/Wgt     Encap-IID
+  10.1.0.3  09:43:49  up      10/10        -         &lt;-- Edge1 RLOC
+10.10.23.0/24, via dynamic-EID, send-map-request
+  Negative cache entry, action: send-map-request</pre>
+
+    <h4>LISP IPv4 Database (Local Registrations)</h4>
+    <span class="config-label">show lisp instance-id 4099 ipv4 database</span>
+    <pre>LISP ETR IPv4 Mapping Database for vrf Corp_VN (IID 4099)
+Entries total 3, no-route 0, inactive 0, do-not-register 2
+
+10.10.22.1/32, dynamic-eid Contractors_VLAN-IPV4, do not register &lt;-- Anycast GW
+  Locator   Pri/Wgt  Source     State
+  10.1.0.4   10/10   cfg-intf   site-self, reachable
+10.10.22.128/32, dynamic-eid Contractors_VLAN-IPV4                &lt;-- Host (registered)
+  Locator   Pri/Wgt  Source     State
+  10.1.0.4   10/10   cfg-intf   site-self, reachable
+10.10.23.1/32, dynamic-eid Guests_VLAN-IPV4, do not register</pre>
+
+    <h4>CEF Forwarding</h4>
+    <span class="config-label">show ip cef vrf Corp_VN</span>
+    <pre>SDA-Edge2# show ip cef vrf Corp_VN 10.10.22.2
+10.10.22.2/32
+  nexthop 10.1.0.3 LISP0.4099              &lt;-- Remote: LISP encap to Edge1
+
+SDA-Edge2# show ip cef vrf Corp_VN 10.10.22.128
+10.10.22.128/32
+  nexthop 10.10.22.128 Vlan1023            &lt;-- Local: direct on Vlan1023</pre>
+
+    <h4>VRF Routing Table</h4>
+    <span class="config-label">show ip route vrf Corp_VN</span>
+    <pre>Routing Table: Corp_VN
+C     10.10.22.0/24 is directly connected, Vlan1023
+L     10.10.22.1/32 is directly connected, Vlan1023
+l     10.10.22.128/32 [10/1] via 10.10.22.128, Vlan1023  &lt;-- LISP dynamic-EID (local host)
+C     10.10.23.0/24 is directly connected, Vlan1024
+L     10.10.23.1/32 is directly connected, Vlan1024</pre>
+
+    <h4>L2 LISP MAC Map-Cache (Instance 8190 / VLAN 1023)</h4>
+    <span class="config-label">show lisp instance-id 8190 ethernet map-cache</span>
+    <pre>LISP MAC Mapping Cache for EID-table Vlan 1023 (IID 8190), 1 entries
+
+5254.00dc.21bf/48, via map-reply, complete            &lt;-- Windows1 MAC (remote, on Edge1)
+  Locator   Uptime    State  Pri/Wgt     Encap-IID
+  10.1.0.3  00:03:31  up      10/10        -</pre>
+
+    <h4>MAC Address Table (VLAN 1023)</h4>
+    <span class="config-label">show mac address-table vlan 1023</span>
+    <pre>Vlan    Mac Address       Type        Ports
+----    -----------       --------    -----
+1023    0000.0c9f.f1d6    STATIC      Vl1023         &lt;-- Anycast GW MAC
+1023    5254.0038.1c70    STATIC      Vl1023         &lt;-- SVI MAC
+1023    5254.0051.8d70    STATIC      Gi1/0/5        &lt;-- Windows0 (LOCAL)
+1023    5254.00dc.21bf    CP_LEARN    L2LI0          &lt;-- Windows1 (REMOTE via LISP)</pre>
+
+    <h4>ARP Table (Corp_VN)</h4>
+    <span class="config-label">show ip arp vrf Corp_VN</span>
+    <pre>Protocol  Address          Age (min)  Hardware Addr   Type   Interface
+Internet  10.10.22.1              -   0000.0c9f.f1d6  ARPA   Vlan1023   &lt;-- Anycast GW
+Internet  10.10.22.128            0   5254.0051.8d70  ARPA   Vlan1023   &lt;-- Windows0 (local)</pre>
+
+    <hr style="border-color: var(--border); margin: 30px 0;">
+
+    <h3>Cross-Edge Forwarding Summary</h3>
+    <div class="card">
+        <table>
+            <tr><th>Lookup</th><th>Edge1 (10.1.0.3)</th><th>Edge2 (10.1.0.4)</th></tr>
+            <tr><td>10.10.22.2/32</td><td>Local &rarr; Vlan1023 (Gi1/0/5)</td><td>Remote &rarr; LISP0.4099 &rarr; RLOC 10.1.0.3</td></tr>
+            <tr><td>10.10.22.128/32</td><td>Remote &rarr; LISP0.4099 &rarr; RLOC 10.1.0.4</td><td>Local &rarr; Vlan1023 (Gi1/0/5)</td></tr>
+            <tr><td>MAC 5254.00dc.21bf</td><td>Local &rarr; Gi1/0/5</td><td>Remote &rarr; CP_LEARN L2LISP</td></tr>
+            <tr><td>MAC 5254.0051.8d70</td><td>Remote &rarr; CP_LEARN L2LISP</td><td>Local &rarr; Gi1/0/5</td></tr>
+            <tr><td>SGT for local host</td><td>10.10.22.2 = SGT 5 (LOCAL)</td><td>10.10.22.128 = SGT 5 (LOCAL)</td></tr>
+        </table>
+    </div>
+</div>
+
+<!-- PACKET WALKTHROUGH -->
+<div class="section" id="walkthrough">
+    <h2>Cross-Edge Packet Walkthrough</h2>
+
+    <div class="card">
+        <h3>Scenario: Windows0 (10.10.22.128) pings Windows1 (10.10.22.2)</h3>
+        <p>Both hosts are on VLAN 1023 (Contractors_VLAN) but connected to different edge switches. Same subnet, same VRF (Corp_VN), same anycast gateway (10.10.22.1).</p>
+        <table>
+            <tr><th>Host</th><th>IP</th><th>MAC</th><th>Edge</th><th>Port</th><th>SGT</th></tr>
+            <tr><td>Windows0</td><td>10.10.22.128</td><td>5254.0051.8d70</td><td>Edge2 (10.1.0.4)</td><td>Gi1/0/5</td><td>5 (Contractors)</td></tr>
+            <tr><td>Windows1</td><td>10.10.22.2</td><td>5254.00dc.21bf</td><td>Edge1 (10.1.0.3)</td><td>Gi1/0/5</td><td>5 (Contractors)</td></tr>
+        </table>
+    </div>
+
+    <h3>Step 1: ARP Resolution (L2 LISP Flooding)</h3>
+    <div class="card">
+        <pre style="color: var(--accent-cyan);">
+  Windows0                    Edge2                 Underlay              Edge1                    Windows1
+  10.10.22.128                (10.1.0.4)            (IS-IS)              (10.1.0.3)               10.10.22.2
+      |                          |                     |                     |                        |
+      |--ARP: Who has 10.10.22.2?|                     |                     |                        |
+      |  dst: ffff.ffff.ffff     |                     |                     |                        |
+      |  (broadcast)             |                     |                     |                        |
+      |------------------------&gt; |                     |                     |                        |
+      |                          |                     |                     |                        |
+      |                  [ARP is broadcast]             |                     |                        |
+      |                  [LISP L2 instance 8190]        |                     |                        |
+      |                  [Flood via multicast]          |                     |                        |
+      |                          |                     |                     |                        |
+      |                          |== VXLAN encap ======&gt;|                     |                        |
+      |                          |  Outer src: 10.1.0.4|                     |                        |
+      |                          |  Outer dst: 239.0.17.1 (mcast)            |                        |
+      |                          |  VNI: 8190          |                     |                        |
+      |                          |  Inner: ARP broadcast                     |                        |
+      |                          |                     |                     |                        |
+      |                          |                     |=== PIM delivers ==&gt; |                        |
+      |                          |                     |    to L2LISP0.8190  |                        |
+      |                          |                     |                     |                        |
+      |                          |                     |             [Decap VXLAN]                     |
+      |                          |                     |             [ARP on Vlan1023]                 |
+      |                          |                     |             [Windows1 is local] ----------&gt;   |
+      |                          |                     |                     |                        |
+      |                          |                     |                     | &lt;-- ARP Reply:          |
+      |                          |                     |                     |     10.10.22.2 is at    |
+      |                          |                     |                     |     5254.00dc.21bf      |
+        </pre>
+    </div>
+
+    <h3>Step 2: ARP Reply (L2 LISP Unicast)</h3>
+    <div class="card">
+        <pre style="color: var(--accent-cyan);">
+  Windows1                    Edge1                 Underlay              Edge2                    Windows0
+  10.10.22.2                  (10.1.0.3)            (IS-IS)              (10.1.0.4)               10.10.22.128
+      |                          |                     |                     |                        |
+      |--ARP Reply:              |                     |                     |                        |
+      |  10.10.22.2 is at        |                     |                     |                        |
+      |  5254.00dc.21bf          |                     |                     |                        |
+      |------------------------&gt; |                     |                     |                        |
+      |                          |                     |                     |                        |
+      |                  [dst MAC: 5254.0051.8d70]     |                     |                        |
+      |                  [MAC table: CP_LEARN L2LI0]   |                     |                        |
+      |                  [LISP L2 map-cache: RLOC 10.1.0.4]                  |                        |
+      |                          |                     |                     |                        |
+      |                          |== VXLAN unicast ===&gt;|===================&gt; |                        |
+      |                          |  Outer src: 10.1.0.3|                     |                        |
+      |                          |  Outer dst: 10.1.0.4| (unicast)           |                        |
+      |                          |  VNI: 8190          |                     |                        |
+      |                          |                     |             [Decap VXLAN]                     |
+      |                          |                     |             [Deliver to Gi1/0/5] ----------&gt;  |
+        </pre>
+    </div>
+
+    <h3>Step 3: ICMP Echo (L3 LISP + VXLAN-GPO with SGT)</h3>
+    <div class="card">
+        <pre style="color: var(--accent-cyan);">
+  Windows0                    Edge2 (Ingress)       Underlay              Edge1 (Egress)           Windows1
+  10.10.22.128                (10.1.0.4)            (IS-IS)              (10.1.0.3)               10.10.22.2
+      |                          |                     |                     |                        |
+      |--ICMP Echo Request       |                     |                     |                        |
+      |  src: 10.10.22.128       |                     |                     |                        |
+      |  dst: 10.10.22.2         |                     |                     |                        |
+      |  dst MAC: 5254.00dc.21bf |                     |                     |                        |
+      |------------------------&gt; |                     |                     |                        |
+      |                          |                     |                     |                        |
+      |               [CEF lookup vrf Corp_VN]         |                     |                        |
+      |               [10.10.22.2/32 &rarr; LISP0.4099]    |                     |                        |
+      |               [  nexthop: 10.1.0.3 (Edge1)]    |                     |                        |
+      |               [CTS: src 10.10.22.128 = SGT 5]  |                     |                        |
+      |                          |                     |                     |                        |
+      |                          |== VXLAN-GPO encap =&gt;|===================&gt; |                        |
+      |                          |  Outer IP:          |                     |                        |
+      |                          |    src: 10.1.0.4    |                     |                        |
+      |                          |    dst: 10.1.0.3    |                     |                        |
+      |                          |  UDP dst port: 4789 |                     |                        |
+      |                          |  VXLAN header:      |                     |                        |
+      |                          |    VNI: 4099        |                     |                        |
+      |                          |    GPO: SGT=5       |  &lt;-- Source SGT     |                        |
+      |                          |  Inner packet:      |                     |                        |
+      |                          |    ICMP Echo Request |                     |                        |
+      |                          |                     |                     |                        |
+      |                          |                     |             [Decap VXLAN-GPO]                 |
+      |                          |                     |             [Read SGT=5 from header]          |
+      |                          |                     |             [dst 10.10.22.2 = local]          |
+      |                          |                     |             [CTS: dst SGT=5 (LOCAL)]          |
+      |                          |                     |             [SGACL: src:5&rarr;dst:5 = Permit]     |
+      |                          |                     |             [Deliver to Vlan1023 Gi1/0/5] --&gt; |
+        </pre>
+    </div>
+
+    <h3>Step 4: ICMP Echo Reply (Reverse Path)</h3>
+    <div class="card">
+        <pre style="color: var(--accent-cyan);">
+  Windows1                    Edge1 (Ingress)       Underlay              Edge2 (Egress)           Windows0
+  10.10.22.2                  (10.1.0.3)            (IS-IS)              (10.1.0.4)               10.10.22.128
+      |                          |                     |                     |                        |
+      |--ICMP Echo Reply         |                     |                     |                        |
+      |  src: 10.10.22.2         |                     |                     |                        |
+      |  dst: 10.10.22.128       |                     |                     |                        |
+      |------------------------&gt; |                     |                     |                        |
+      |                          |                     |                     |                        |
+      |               [CEF lookup vrf Corp_VN]         |                     |                        |
+      |               [10.10.22.128/32 &rarr; LISP0.4099]  |                     |                        |
+      |               [  nexthop: 10.1.0.4 (Edge2)]    |                     |                        |
+      |               [CTS: src 10.10.22.2 = SGT 5]    |                     |                        |
+      |                          |                     |                     |                        |
+      |                          |== VXLAN-GPO encap =&gt;|===================&gt; |                        |
+      |                          |  Outer IP:          |                     |                        |
+      |                          |    src: 10.1.0.3    |                     |                        |
+      |                          |    dst: 10.1.0.4    |                     |                        |
+      |                          |  VXLAN: VNI=4099    |                     |                        |
+      |                          |  GPO: SGT=5         |                     |                        |
+      |                          |                     |                     |                        |
+      |                          |                     |             [Decap VXLAN-GPO]                 |
+      |                          |                     |             [SGT=5, dst SGT=5]                |
+      |                          |                     |             [SGACL: Permit]                   |
+      |                          |                     |             [Deliver to Gi1/0/5] ----------&gt;  |
+        </pre>
+        <p><strong>Result</strong>: Ping succeeds. Round-trip through LISP/VXLAN overlay via IS-IS underlay.</p>
+    </div>
+
+    <h3>Summary of Encapsulation Layers</h3>
+    <div class="card">
+        <pre style="color: var(--accent-green);">
++------------------------------------------------------------------+
+| Outer Ethernet | Outer IP      | UDP   | VXLAN-GPO  | Inner Pkt  |
+| (underlay)     | src: local Lo0| :4789 | VNI: 4099  | Original   |
+|                | dst: remote Lo0|       | SGT: 5     | ICMP frame |
++------------------------------------------------------------------+
+  ^                ^                        ^              ^
+  |                |                        |              |
+  IS-IS            Loopback0 IPs           Group Policy   Original
+  underlay         (RLOCs)                 Option (SGT)   L2+L3 pkt
+        </pre>
+    </div>
 </div>
 
 <!-- CATALYST CENTER -->
@@ -1541,7 +2054,7 @@ conn.enable()   # RADIUS lands at priv 1, must enable for priv 15</pre>
 <div class="section" id="progress">
     <h2>Progress Tracker</h2>
 
-    <p style="margin-bottom: 4px;">Overall Progress: <strong>50 / 54 tasks</strong></p>
+    <p style="margin-bottom: 4px;">Overall Progress: <strong>53 / 57 tasks</strong></p>
     <div class="progress-bar"><div class="fill" style="width: 93%"></div></div>
 
     <h3>Completed</h3>
@@ -1595,14 +2108,17 @@ conn.enable()   # RADIUS lands at priv 1, must enable for priv 15</pre>
         <div class="timeline-item done">SGT cleanup verified on interface shutdown/re-enable</div>
         <div class="timeline-item done">CTS role-based enforcement enabled on Edge VLANs 1021-1024</div>
         <div class="timeline-item done">ISE SXP "Add RADIUS and PassiveID Mappings" enabled for dynamic propagation</div>
+        <div class="timeline-item done">PIM multicast underlay configured (RP on Border, sparse-mode on Lo0+Gi1/0/1)</div>
+        <div class="timeline-item done">Cross-edge VXLAN data plane verified working (Windows0 &harr; Windows1 ping)</div>
+        <div class="timeline-item done">CSR1000V added to CML &mdash; SXP from ISE, inline SGT tagging on G2/G3</div>
     </div>
 
     <h3>Remaining</h3>
     <div class="timeline">
-        <div class="timeline-item pending">Add Cisco CSR router to CML topology (external to fabric)</div>
-        <div class="timeline-item pending">Configure Border as SXP Speaker to CSR router</div>
         <div class="timeline-item pending">Configure SGT-based ACLs (SGACL) on CSR router</div>
+        <div class="timeline-item pending">Fix CSR inline SGT per-flow (need cts sgt-caching or newer IOS-XE)</div>
         <div class="timeline-item pending">Add Versa FlexVNF and verify IP-SGT propagation end-to-end</div>
+        <div class="timeline-item pending">End-to-end SGT propagation test: Fabric &rarr; CSR &rarr; Versa</div>
     </div>
 </div>
 

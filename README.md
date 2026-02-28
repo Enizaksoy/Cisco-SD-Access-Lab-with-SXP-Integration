@@ -95,7 +95,7 @@ Test **IP-SGT propagation via SXP** from SD-Access fabric to external devices (C
 | `sda_topology.yaml` | CML topology definition |
 | `create_sda_topology.py` | CML topology creation script |
 
-## Progress: 93% (50/54 tasks)
+## Progress: 93% (53/57 tasks)
 
 ### Completed
 - Full fabric deployment (IS-IS, LISP, VXLAN, VRF)
@@ -104,12 +104,15 @@ Test **IP-SGT propagation via SXP** from SD-Access fabric to external devices (C
 - 802.1X Closed Authentication with dynamic VLAN + SGT assignment
 - DHCP pools with split ranges across Edge switches
 - ISE authorization profiles and policies per user group
+- PIM multicast underlay (required for LISP L2 broadcast-underlay 239.0.17.1)
+- Cross-edge VXLAN data plane verified (host-to-host ping working)
+- CSR1000V added with ISE SXP (10 IP-SGT mappings) + inline SGT tagging
 
 ### Remaining
-- Add Cisco CSR router to CML (external to fabric)
-- Configure Border as SXP Speaker to CSR
 - SGT-based ACLs (SGACL) on CSR
+- CSR per-flow SGT resolution (needs cts sgt-caching or newer IOS-XE)
 - Versa FlexVNF integration for end-to-end SGT propagation
+- End-to-end test: Fabric → CSR → Versa
 
 ## Tools Used
 - **Cisco CML 2.9.1** (Bare Metal - Lenovo P920)
