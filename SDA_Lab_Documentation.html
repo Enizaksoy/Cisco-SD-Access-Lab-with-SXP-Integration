@@ -354,6 +354,7 @@ pre {
         <div class="nav-label">Overview</div>
         <a class="nav-item active" data-section="overview">Overview</a>
         <a class="nav-item" data-section="topology">Topology</a>
+        <a class="nav-item" data-section="users-sgts">Users & SGT Assignments</a>
     </div>
     <div class="nav-section">
         <div class="nav-label">Infrastructure</div>
@@ -370,6 +371,7 @@ pre {
         <a class="nav-item" data-section="sxp">SXP / SGT</a>
         <a class="nav-item" data-section="sgt-fabric">SGT in Fabric</a>
         <a class="nav-item" data-section="sgacl-testing">SGACL Testing</a>
+        <a class="nav-item" data-section="pxgrid-testing">pxGrid 2.0 Testing</a>
     </div>
     <div class="nav-section">
         <div class="nav-label">Data Plane</div>
@@ -532,6 +534,121 @@ pre {
             <td>xTR / VTEP</td>
         </tr>
     </table>
+</div>
+
+<!-- USERS & SGT ASSIGNMENTS -->
+<div class="section" id="users-sgts">
+    <h2>Users, Groups & SGT Assignments</h2>
+    <p>ISE internal users are mapped to identity groups, which drive authorization profiles for dynamic VLAN and SGT assignment during 802.1X authentication.</p>
+
+    <h3>ISE Identity Groups &rarr; VLAN &rarr; SGT Mapping</h3>
+    <table>
+        <tr><th>Identity Group</th><th>Auth Profile</th><th>VLAN Name</th><th>VLAN ID</th><th>Subnet</th><th>SGT</th><th>SGT Tag</th></tr>
+        <tr>
+            <td><span class="badge badge-green">Employees_Group</span></td>
+            <td>Employees_Profile</td>
+            <td>Employees_VLAN</td>
+            <td>1022</td>
+            <td>10.10.21.0/24</td>
+            <td>Employees</td>
+            <td>4</td>
+        </tr>
+        <tr>
+            <td><span class="badge badge-orange">Contractors_Group</span></td>
+            <td>Contractors_Profile</td>
+            <td>Contractors_VLAN</td>
+            <td>1023</td>
+            <td>10.10.22.0/24</td>
+            <td>Contractors</td>
+            <td>5</td>
+        </tr>
+        <tr>
+            <td><span class="badge badge-purple">Guests_Group</span></td>
+            <td>Guests_Profile</td>
+            <td>Guests_VLAN</td>
+            <td>1024</td>
+            <td>10.10.23.0/24</td>
+            <td>Guests</td>
+            <td>6</td>
+        </tr>
+    </table>
+
+    <h3>ISE Internal Users</h3>
+    <table>
+        <tr><th>Username</th><th>Identity Group</th><th>Assigned VLAN</th><th>Assigned SGT</th><th>Purpose</th></tr>
+        <tr><td><code>netadmin</code></td><td>Employee</td><td>&mdash;</td><td>&mdash;</td><td>Switch SSH admin (RADIUS)</td></tr>
+        <tr><td><code>versa</code></td><td>Employee</td><td>&mdash;</td><td>&mdash;</td><td>Alternate admin</td></tr>
+        <tr><td><code>User_1</code></td><td><span class="badge badge-green">Employees_Group</span></td><td>1022 (10.10.21.x)</td><td>Employees (4)</td><td>802.1X test user</td></tr>
+        <tr><td><code>User_2</code></td><td><span class="badge badge-green">Employees_Group</span></td><td>1022 (10.10.21.x)</td><td>Employees (4)</td><td>802.1X test user</td></tr>
+        <tr><td><code>User_3</code></td><td><span class="badge badge-green">Employees_Group</span></td><td>1022 (10.10.21.x)</td><td>Employees (4)</td><td>802.1X test user</td></tr>
+        <tr><td><code>User_4</code></td><td><span class="badge badge-orange">Contractors_Group</span></td><td>1023 (10.10.22.x)</td><td>Contractors (5)</td><td>802.1X test user</td></tr>
+        <tr><td><code>User_5</code></td><td><span class="badge badge-orange">Contractors_Group</span></td><td>1023 (10.10.22.x)</td><td>Contractors (5)</td><td>802.1X test user</td></tr>
+        <tr><td><code>User_6</code></td><td><span class="badge badge-orange">Contractors_Group</span></td><td>1023 (10.10.22.x)</td><td>Contractors (5)</td><td>802.1X test user</td></tr>
+        <tr><td><code>User_7</code></td><td><span class="badge badge-purple">Guests_Group</span></td><td>1024 (10.10.23.x)</td><td>Guests (6)</td><td>802.1X test user</td></tr>
+        <tr><td><code>User_8</code></td><td><span class="badge badge-purple">Guests_Group</span></td><td>1024 (10.10.23.x)</td><td>Guests (6)</td><td>802.1X test user</td></tr>
+        <tr><td><code>User_9</code></td><td><span class="badge badge-purple">Guests_Group</span></td><td>1024 (10.10.23.x)</td><td>Guests (6)</td><td>802.1X test user</td></tr>
+        <tr><td><code>User_10</code></td><td><span class="badge badge-purple">Guests_Group</span></td><td>1024 (10.10.23.x)</td><td>Guests (6)</td><td>802.1X test user</td></tr>
+    </table>
+
+    <h3>ISE Authorization Policies</h3>
+    <div class="card">
+        <p>Authorization rules in the Default Policy Set match identity groups and assign the corresponding VLAN + SGT:</p>
+    </div>
+    <table>
+        <tr><th>Rank</th><th>Rule Name</th><th>Condition</th><th>Auth Profile</th><th>SGT</th></tr>
+        <tr><td>10</td><td>SDA_Employees</td><td>IdentityGroup = Employees_Group</td><td>Employees_Profile</td><td><span class="badge badge-green">Employees (4)</span></td></tr>
+        <tr><td>11</td><td>SDA_Contractors</td><td>IdentityGroup = Contractors_Group</td><td>Contractors_Profile</td><td><span class="badge badge-orange">Contractors (5)</span></td></tr>
+        <tr><td>12</td><td>SDA_Guests</td><td>IdentityGroup = Guests_Group</td><td>Guests_Profile</td><td><span class="badge badge-purple">Guests (6)</span></td></tr>
+        <tr><td>13</td><td>Basic_Authenticated_Access</td><td>Auth Passed</td><td>PermitAccess</td><td>&mdash;</td></tr>
+        <tr><td>14</td><td>Default</td><td>&mdash;</td><td>DenyAccess</td><td>&mdash;</td></tr>
+    </table>
+
+    <h3>Security Groups (SGTs)</h3>
+    <table>
+        <tr><th>SGT Name</th><th>Tag</th><th>Description</th><th>Usage</th></tr>
+        <tr><td>Unknown</td><td>0</td><td>Unauthenticated</td><td>Default for unknown endpoints</td></tr>
+        <tr><td>TrustSec_Devices</td><td>2</td><td>Network devices</td><td>Switches, routers</td></tr>
+        <tr><td>Network_Services</td><td>3</td><td>Network services</td><td>DNS, DHCP, NTP</td></tr>
+        <tr><td>Employees</td><td>4</td><td>Employee endpoints</td><td>User_1-3 via 802.1X</td></tr>
+        <tr><td>Contractors</td><td>5</td><td>Contractor endpoints</td><td>User_4-6 via 802.1X</td></tr>
+        <tr><td>Guests</td><td>6</td><td>Guest users</td><td>User_7-10 via 802.1X</td></tr>
+        <tr><td>Production_Users</td><td>7</td><td>Production users</td><td>Static binding test</td></tr>
+        <tr><td>Developers</td><td>8</td><td>Developer endpoints</td><td>Static binding test</td></tr>
+        <tr><td>Auditors</td><td>9</td><td>Auditor access</td><td>Static binding (1.1.1.0/24)</td></tr>
+        <tr><td>SGT_101</td><td>101</td><td>SGACL test source</td><td>CSR100v_Static Lo1</td></tr>
+        <tr><td>SGT_102</td><td>102</td><td>SGACL test source</td><td>CSR100v_Static Lo2</td></tr>
+        <tr><td>SGT_103</td><td>103</td><td>SGACL test source</td><td>CSR100v_Static Lo3</td></tr>
+    </table>
+
+    <h3>VLAN &amp; IP Pool Summary</h3>
+    <table>
+        <tr><th>VLAN Name</th><th>VLAN ID</th><th>Subnet</th><th>Gateway (Anycast)</th><th>DHCP Edge1</th><th>DHCP Edge2</th><th>Group</th></tr>
+        <tr><td>Corp_VLAN</td><td>1021</td><td>10.10.20.0/24</td><td>10.10.20.1</td><td>.2-.127</td><td>.128-.254</td><td>Default fabric</td></tr>
+        <tr><td>Employees_VLAN</td><td>1022</td><td>10.10.21.0/24</td><td>10.10.21.1</td><td>.2-.127</td><td>.128-.254</td><td><span class="badge badge-green">Employees</span></td></tr>
+        <tr><td>Contractors_VLAN</td><td>1023</td><td>10.10.22.0/24</td><td>10.10.22.1</td><td>.2-.127</td><td>.128-.254</td><td><span class="badge badge-orange">Contractors</span></td></tr>
+        <tr><td>Guests_VLAN</td><td>1024</td><td>10.10.23.0/24</td><td>10.10.23.1</td><td>.2-.127</td><td>.128-.254</td><td><span class="badge badge-purple">Guests</span></td></tr>
+    </table>
+
+    <h3>802.1X Authentication Flow</h3>
+    <div class="card">
+        <pre>Endpoint connects to Edge Gi1/0/5-10
+    &darr;
+802.1X EAP exchange (dot1x system-auth-control)
+    &darr;
+RADIUS Access-Request &rarr; ISE (192.168.11.250)
+    &darr;
+ISE matches Identity Group &rarr; Authorization Profile
+    &darr;
+RADIUS Access-Accept: VLAN + SGT assignment
+    &darr;
+Edge assigns endpoint to correct VLAN (1022/1023/1024)
+    &darr;
+DHCP from Edge local pool &rarr; endpoint gets IP
+    &darr;
+RADIUS Accounting &rarr; ISE learns IP-SGT binding
+    &darr;
+ISE pushes IP-SGT via SXP to all listeners</pre>
+    </div>
 </div>
 
 <!-- DEVICES -->
@@ -1703,6 +1820,95 @@ route-map MATCH_DC_ROUTE permit 20
     </div>
 </div>
 
+<!-- PXGRID 2.0 TESTING -->
+<div class="section" id="pxgrid-testing">
+    <h2>pxGrid 2.0 Testing</h2>
+    <p>pxGrid enables external security platforms (firewalls, NAC, SIEM) to consume ISE session and SGT data in real-time. Tested using a Python REST + WebSocket client.</p>
+
+    <h3>pxGrid Architecture</h3>
+    <div class="card">
+        <p><strong>pxGrid 2.0</strong> (REST + WebSocket/STOMP) is the only version available in ISE 3.0+. pxGrid 1.0 (XMPP-based) was removed in ISE 3.0.</p>
+        <table>
+            <tr><th>Component</th><th>Protocol</th><th>Port</th><th>Purpose</th></tr>
+            <tr><td>Control API</td><td>HTTPS REST</td><td>8910</td><td>Account management, service lookup, access secrets</td></tr>
+            <tr><td>Data Pull</td><td>HTTPS REST</td><td>8910</td><td>Query sessions, SXP bindings, SGTs on demand</td></tr>
+            <tr><td>Data Push</td><td>WebSocket STOMP</td><td>8910</td><td>Real-time event subscription (session/SXP/SGT changes)</td></tr>
+        </table>
+    </div>
+
+    <h3>pxGrid Account</h3>
+    <table>
+        <tr><th>Setting</th><th>Value</th></tr>
+        <tr><td>Account Name</td><td><code>pxgrid_lab_client</code></td></tr>
+        <tr><td>Auth Type</td><td>Password-based (created via AccountCreate API)</td></tr>
+        <tr><td>State</td><td><span class="badge badge-green">ENABLED</span></td></tr>
+        <tr><td>ISE Setting</td><td>Auto-approve new certificate-based accounts + Allow password-based accounts</td></tr>
+    </table>
+
+    <h3>Data Pull (REST API)</h3>
+    <div class="card">
+        <p>The client queries ISE pxGrid services via REST POST calls. Each service requires an <code>AccessSecret</code> for authentication.</p>
+        <pre>1. AccountActivate &rarr; verify account is ENABLED
+2. AccessSecret(peerNode='~ise-mnt-ise') &rarr; get session service secret
+3. POST /pxgrid/mnt/sd/getSessions &rarr; active 802.1X sessions
+4. POST /pxgrid/ise/sxp/getBindings &rarr; SXP IP-SGT bindings
+5. POST /pxgrid/ise/config/trustsec/getSecurityGroups &rarr; all SGTs
+6. POST /pxgrid/ise/config/trustsec/getEgressPolicies &rarr; egress policies</pre>
+    </div>
+
+    <h3>Data Push (WebSocket STOMP)</h3>
+    <div class="card">
+        <p>Real-time event subscription via STOMP over WebSocket. ISE pushes session/binding changes as they happen.</p>
+        <pre>WebSocket URL: wss://192.168.11.250:8910/pxgrid/ise/pubsub
+Protocol: STOMP 1.2 over WebSocket (binary frames required)
+
+Subscribed Topics:
+  /topic/com.cisco.ise.session        &rarr; session create/update/disconnect
+  /topic/com.cisco.ise.session.group  &rarr; session group changes
+  /topic/com.cisco.ise.sxp            &rarr; SXP binding add/delete
+  /topic/com.cisco.ise.config.trustsec.security.group &rarr; SGT changes</pre>
+        <p><strong>Key finding:</strong> STOMP frames must be sent as <strong>binary</strong> (<code>send_binary</code>), not text. Text frames return empty responses from ISE.</p>
+    </div>
+
+    <h3>pxGrid Query Results</h3>
+    <table>
+        <tr><th>Data Type</th><th>Count</th><th>Source</th><th>Details</th></tr>
+        <tr><td>Active Sessions</td><td>4</td><td>RADIUS (802.1X)</td><td>Users authenticated on Edge1/Edge2 with VLAN + SGT</td></tr>
+        <tr><td>SXP Bindings</td><td>12-13</td><td>Static + Dynamic</td><td>10 static + 2-3 dynamic RADIUS bindings</td></tr>
+        <tr><td>Security Groups</td><td>20</td><td>ISE TrustSec</td><td>Built-in (0-9) + custom (101-103, 13)</td></tr>
+        <tr><td>Egress Policies</td><td>1</td><td>TrustSec Matrix</td><td>Default egress policy</td></tr>
+    </table>
+
+    <h3>Tools &amp; Scripts</h3>
+    <table>
+        <tr><th>Script</th><th>Purpose</th><th>Usage</th></tr>
+        <tr><td><code>pxgrid_client.py</code></td><td>CLI query tool &mdash; displays sessions, SXP bindings, SGTs in terminal</td><td><code>python pxgrid_client.py</code></td></tr>
+        <tr><td><code>pxgrid_web.py</code></td><td>Web dashboard (Flask) &mdash; dark theme UI with real-time event stream</td><td><code>python pxgrid_web.py</code> &rarr; http://localhost:5050</td></tr>
+    </table>
+
+    <h3>Web Dashboard Features</h3>
+    <div class="card">
+        <ul style="margin: 8px 0; padding-left: 20px;">
+            <li><strong>Stats Cards</strong> &mdash; sessions, SXP bindings, SGTs, egress policies, WebSocket status</li>
+            <li><strong>Real-Time Event Stream</strong> &mdash; STOMP WebSocket subscriber, browser polls every 3s</li>
+            <li><strong>Active Sessions</strong> &mdash; user, IP, SGT, NAS port, state, auth method, hostname</li>
+            <li><strong>SXP Bindings</strong> &mdash; IP/prefix, SGT, type, source, VPN/domain, peer sequence</li>
+            <li><strong>Security Groups</strong> &mdash; name, tag value, description</li>
+            <li><strong>Egress Policies</strong> &mdash; source/destination SGTs, SGACL names</li>
+        </ul>
+    </div>
+
+    <h3>Known CML Limitations</h3>
+    <div class="card">
+        <table>
+            <tr><th>Issue</th><th>Detail</th><th>Impact</th></tr>
+            <tr><td>Framed-IP-Address missing</td><td>Cat9Kv RADIUS accounting updates don't include new IP after VLAN change</td><td>ISE may show stale IP for session. Works on real Cat9K hardware.</td></tr>
+            <tr><td>VRF field empty</td><td>pxGrid session data returns empty VRF for CML sessions</td><td>Dashboard shows blank VRF column</td></tr>
+            <tr><td>SXP domain empty</td><td>sxpDomains array empty in SXP binding data</td><td>Domain column shows &ldquo;default&rdquo; fallback</td></tr>
+        </table>
+    </div>
+</div>
+
 <!-- PIM / MULTICAST -->
 <div class="section" id="pim">
     <h2>PIM / Multicast Underlay</h2>
@@ -2149,6 +2355,11 @@ GET  /dna/intent/api/v1/virtual-network?virtualNetworkName=Corp_VN</pre>
         <tr><th>Script</th><th>Purpose</th><th>Status</th></tr>
         <tr><td><code>verify_fabric.py</code></td><td>IS-IS / LISP / VXLAN / VRF / CTS / SXP check on all switches</td><td><span class="badge badge-green">Ready</span></td></tr>
         <tr><td><code>verify_catcenter.py</code></td><td>Cat Center API: devices, fabric, VN, pools, ISE status</td><td><span class="badge badge-green">Ready</span></td></tr>
+        <tr><td><code>configure_sgacl_csr.py</code></td><td>Configure SGACL on CSR_SXP (BLOCK_ICMP, PERMIT_ALL)</td><td><span class="badge badge-green">Executed OK</span></td></tr>
+        <tr><td><code>test_sgacl.py</code></td><td>Test SGACL enforcement (ping tests by source SGT)</td><td><span class="badge badge-green">Executed OK</span></td></tr>
+        <tr><td><code>configure_console_local.py</code></td><td>Add local console auth (cisco/cisco priv 15) on all switches</td><td><span class="badge badge-green">Executed OK</span></td></tr>
+        <tr><td><code>pxgrid_client.py</code></td><td>pxGrid 2.0 CLI client &mdash; sessions, SXP bindings, SGTs</td><td><span class="badge badge-green">Ready</span></td></tr>
+        <tr><td><code>pxgrid_web.py</code></td><td>pxGrid 2.0 web dashboard (Flask, port 5050) with WebSocket push</td><td><span class="badge badge-green">Ready</span></td></tr>
         <tr><td><code>create_sda_v2.py</code></td><td>CML YAML import with vswitch.xml serial numbers</td><td><span class="badge badge-blue">Used</span></td></tr>
         <tr><td><code>sda_topology.yaml</code></td><td>CML topology definition (4x Cat9Kv + switches)</td><td><span class="badge badge-blue">Imported</span></td></tr>
     </table>
@@ -2186,8 +2397,8 @@ conn.enable()   # RADIUS lands at priv 1, must enable for priv 15</pre>
 <div class="section" id="progress">
     <h2>Progress Tracker</h2>
 
-    <p style="margin-bottom: 4px;">Overall Progress: <strong>60 / 64 tasks</strong></p>
-    <div class="progress-bar"><div class="fill" style="width: 94%"></div></div>
+    <p style="margin-bottom: 4px;">Overall Progress: <strong>65 / 68 tasks</strong></p>
+    <div class="progress-bar"><div class="fill" style="width: 96%"></div></div>
 
     <h3>Completed</h3>
     <div class="timeline">
@@ -2251,6 +2462,11 @@ conn.enable()   # RADIUS lands at priv 1, must enable for priv 15</pre>
         <div class="timeline-item done">SGACL configured on CSR_SXP: BLOCK_ICMP (SGT 5&rarr;101), PERMIT_ALL (SGT 5&rarr;102)</div>
         <div class="timeline-item done">SGACL tested and verified &mdash; ICMP blocked for SGT 101, permitted for SGT 102/103</div>
         <div class="timeline-item done">Credential cleanup: all scripts use centralized creds.py, .gitignore updated</div>
+        <div class="timeline-item done">Local console auth configured on all switches (cisco/cisco priv 15, AAA CONSOLE local)</div>
+        <div class="timeline-item done">pxGrid 2.0 account created (pxgrid_lab_client, password-based, ENABLED)</div>
+        <div class="timeline-item done">pxGrid REST client: sessions, SXP bindings, SGTs, egress policies queried</div>
+        <div class="timeline-item done">pxGrid WebSocket STOMP subscriber: real-time session/SXP/SGT event push</div>
+        <div class="timeline-item done">pxGrid web dashboard (Flask, port 5050) with dark theme + real-time event stream</div>
     </div>
 
     <h3>Remaining</h3>
