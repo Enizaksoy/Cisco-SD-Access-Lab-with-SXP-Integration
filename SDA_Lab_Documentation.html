@@ -369,6 +369,7 @@ pre {
         <a class="nav-item" data-section="ise">ISE Integration</a>
         <a class="nav-item" data-section="sxp">SXP / SGT</a>
         <a class="nav-item" data-section="sgt-fabric">SGT in Fabric</a>
+        <a class="nav-item" data-section="sgacl-testing">SGACL Testing</a>
     </div>
     <div class="nav-section">
         <div class="nav-label">Data Plane</div>
@@ -1459,7 +1460,7 @@ cts role-based enforcement vlan-list 1021-1024</pre>
         <tr><td>4</td><td>Add Cisco CSR router to CML topology (external to fabric)</td><td><span class="badge badge-green">DONE</span></td></tr>
         <tr><td>5</td><td>ISE SXP Speaker to CSR (10 IP-SGT mappings received)</td><td><span class="badge badge-green">DONE</span></td></tr>
         <tr><td>6</td><td>CSR inline SGT tagging on G2/G3 (CTS manual + propagate sgt)</td><td><span class="badge badge-green">DONE</span></td></tr>
-        <tr><td>7</td><td>Configure SGT-based ACLs (SGACL) on CSR router</td><td><span class="badge badge-orange">TODO</span></td></tr>
+        <tr><td>7</td><td>Configure SGT-based ACLs (SGACL) on CSR router</td><td><span class="badge badge-green">DONE</span></td></tr>
         <tr><td>8</td><td>Add Versa FlexVNF and verify IP-SGT propagation end-to-end</td><td><span class="badge badge-orange">TODO</span></td></tr>
     </table>
 </div>
@@ -1569,6 +1570,137 @@ IP Address              SGT     Source
     <pre>SDA-Edge1# show cts role-based permissions
 IPv4 Role-based permissions default:
 	Permit IP-00                &lt;-- Downloaded from ISE, permits all SGT-to-SGT traffic</pre>
+</div>
+
+<!-- SGACL TESTING -->
+<div class="section" id="sgacl-testing">
+    <h2>SGACL Testing on CSR_SXP</h2>
+
+    <div class="card">
+        <h3>Test Topology</h3>
+        <p>Traffic between CSR100v_Static loopbacks and fabric Windows hosts traverses CSR_SXP, where SGACL enforcement is applied based on SGT tags learned via SXP from ISE.</p>
+        <pre>CSR100v_Static (10.1.1.x, SGT 101-103)
+    &darr; Gi2 (10.1.200.2)
+CSR_SXP (SGACL enforcement, SXP listener)
+    &darr; Gi4.100 (10.201.201.2)
+Border (Corp_VN, Vlan100, 10.201.201.1)
+    &darr; LISP / VXLAN
+Edges &rarr; Windows0 (10.10.22.128, SGT 5) / Windows1 (10.10.22.2, SGT 5)</pre>
+    </div>
+
+    <h3>External Devices</h3>
+    <table>
+        <tr><th>Device</th><th>IP</th><th>Role</th><th>Key Interfaces</th></tr>
+        <tr><td>CSR_SXP</td><td>192.168.244.16</td><td>SXP listener + SGACL enforcement</td><td>Gi3: 10.1.200.1/24, Gi4.100: 10.201.201.2/30</td></tr>
+        <tr><td>CSR100v_Static</td><td>192.168.244.17</td><td>Test host with SGT loopbacks</td><td>Gi2: 10.1.200.2/24, Lo1-3: 10.1.1.1-3/32</td></tr>
+    </table>
+
+    <h3>SGT Assignments (via ISE SXP)</h3>
+    <table>
+        <tr><th>IP</th><th>SGT</th><th>Name</th><th>Source</th></tr>
+        <tr><td>10.1.1.1</td><td>101</td><td>SGT_101</td><td>Static (ISE)</td></tr>
+        <tr><td>10.1.1.2</td><td>102</td><td>SGT_102</td><td>Static (ISE)</td></tr>
+        <tr><td>10.1.1.3</td><td>103</td><td>SGT_103</td><td>Static (ISE)</td></tr>
+        <tr><td>10.10.22.2</td><td>5</td><td>Contractors</td><td>Dynamic (RADIUS)</td></tr>
+        <tr><td>10.10.22.128</td><td>5</td><td>Contractors</td><td>Dynamic (RADIUS)</td></tr>
+    </table>
+
+    <h3>SXP VPN Architecture</h3>
+    <div class="card">
+        <p><strong>Key insight:</strong> ISE assigns dynamic RADIUS-learned bindings to <code>DEFAULT_VN</code> (default SXP VPN). Static bindings are also created in the default VPN. CSR_SXP's SXP connection uses VPN=default to receive both types.</p>
+        <p>SDA switches (Border, Edges) use VPN=Corp_VN but don't need SXP bindings &mdash; they use <strong>VXLAN-GPO inline tagging</strong> for SGT propagation inside the fabric.</p>
+        <table>
+            <tr><th>Peer</th><th>SXP VPN</th><th>Receives</th></tr>
+            <tr><td>CSR_SXP</td><td>default</td><td>Static + Dynamic RADIUS bindings (12 total)</td></tr>
+            <tr><td>SDA-Border</td><td>Corp_VN</td><td>Corp_VN static bindings only</td></tr>
+            <tr><td>SDA-Edge1/2</td><td>Corp_VN</td><td>Corp_VN static bindings only</td></tr>
+        </table>
+    </div>
+
+    <h3>SGACL Configuration (CSR_SXP)</h3>
+    <p><strong>Key difference from regular ACLs:</strong> SGACLs are applied <strong>globally by SGT pair</strong>, not per-interface. The router matches source/destination IP &rarr; SGT from SXP bindings, then applies the matching role-based ACL on all interfaces where <code>cts role-based enforcement</code> is enabled.</p>
+    <pre>! Role-based ACL: deny ICMP, permit everything else
+ip access-list role-based BLOCK_ICMP
+ deny icmp
+ permit ip
+!
+! Role-based ACL: permit all traffic
+ip access-list role-based PERMIT_ALL
+ permit ip
+!
+! Apply SGACL policies by SGT pair
+! SGT 5 (Contractors/Windows) &rarr; SGT 101 (10.1.1.1) = block ICMP
+cts role-based permissions from 5 to 101 BLOCK_ICMP
+! SGT 5 (Contractors/Windows) &rarr; SGT 102 (10.1.1.2) = permit all
+cts role-based permissions from 5 to 102 PERMIT_ALL
+!
+! Prerequisites (already configured)
+cts sxp enable
+cts role-based enforcement</pre>
+
+    <h3>Test Procedure</h3>
+    <p>From <strong>CSR100v_Static</strong>, ping Windows0 (10.10.22.128) using different loopback source IPs. The return traffic (src=10.10.22.128/SGT 5, dst=10.1.1.x/SGT 101-103) traverses CSR_SXP where SGACL is enforced.</p>
+    <pre>! Test 1: SGT 101 &rarr; SGT 5 (BLOCK_ICMP) - should FAIL
+ping 10.10.22.128 source 10.1.1.1 repeat 5
+
+! Test 2: SGT 102 &rarr; SGT 5 (PERMIT_ALL) - should PASS
+ping 10.10.22.128 source 10.1.1.2 repeat 5
+
+! Test 3: SGT 103 &rarr; SGT 5 (no rule) - should PASS
+ping 10.10.22.128 source 10.1.1.3 repeat 5
+
+! Test 4: No SGT &rarr; SGT 5 (baseline) - should PASS
+ping 10.10.22.128 source 10.1.200.2 repeat 3</pre>
+
+    <h3>Test Results</h3>
+    <table>
+        <tr><th>Source</th><th>Destination</th><th>Src SGT</th><th>Dst SGT</th><th>SGACL</th><th>Result</th></tr>
+        <tr><td>10.1.1.1</td><td>10.10.22.128</td><td>101</td><td>5</td><td>BLOCK_ICMP</td><td><span class="badge badge-red">0/5 BLOCKED</span></td></tr>
+        <tr><td>10.1.1.2</td><td>10.10.22.128</td><td>102</td><td>5</td><td>PERMIT_ALL</td><td><span class="badge badge-green">5/5 PASSED</span></td></tr>
+        <tr><td>10.1.1.3</td><td>10.10.22.128</td><td>103</td><td>5</td><td>(no rule)</td><td><span class="badge badge-green">5/5 PASSED</span></td></tr>
+        <tr><td>10.1.200.2</td><td>10.10.22.128</td><td>(none)</td><td>5</td><td>(no rule)</td><td><span class="badge badge-green">3/3 PASSED</span></td></tr>
+    </table>
+
+    <h3>SGACL Counters (CSR_SXP)</h3>
+    <pre>CSR_SXP# show cts role-based counters
+Role-based IPv4 counters
+From    To      SW-Denied  HW-Denied  SW-Permitt HW-Permitt SW-Monitor HW-Monitor
+5       101     0          71         0          0          0          0          &larr; ICMP blocked
+5       102     0          0          0          308        0          0          &larr; All permitted</pre>
+
+    <h3>Verification Commands (CSR_SXP)</h3>
+    <pre>show cts role-based permissions          ! SGACL policy assignments per SGT pair
+show ip access-lists role-based          ! Role-based ACL rules
+show cts role-based counters             ! Hit counters (denied/permitted per SGT pair)
+show cts role-based sgt-map all          ! IP-to-SGT mappings (SXP + internal)
+show cts sxp connections                 ! SXP connection status to ISE
+show cts sxp sgt-map                     ! SXP-learned bindings with detail</pre>
+
+    <h3>Border L3 Handoff &amp; LISP Route Import</h3>
+    <div class="card">
+        <p>Border advertises Corp_VN routes to CSR_SXP via BGP and imports external routes into LISP for fabric reachability:</p>
+        <pre>! Border BGP (pushed by Cat Center)
+router bgp 6501
+ address-family ipv4 vrf Corp_VN
+  aggregate-address 10.10.20.0 255.255.255.0 summary-only
+  aggregate-address 10.10.21.0 255.255.255.0 summary-only
+  aggregate-address 10.10.22.0 255.255.255.0 summary-only
+  aggregate-address 10.10.23.0 255.255.255.0 summary-only
+  redistribute lisp metric 10 route-map LISP_TO_BGP
+  neighbor 10.201.201.2 remote-as 6502
+
+! LISP route-import (imports BGP routes with tag 6502 into LISP database)
+router lisp
+ instance-id 4099
+  service ipv4
+   route-import database bgp 6501 route-map MATCH_DC_ROUTE
+
+! Route-map permits routes with AS tag 6502 (CSR_SXP)
+route-map MATCH_DC_ROUTE deny 5
+ match ip address prefix-list DENY_0.0.0.0
+route-map MATCH_DC_ROUTE permit 20
+ match tag 6502</pre>
+    </div>
 </div>
 
 <!-- PIM / MULTICAST -->
@@ -2054,8 +2186,8 @@ conn.enable()   # RADIUS lands at priv 1, must enable for priv 15</pre>
 <div class="section" id="progress">
     <h2>Progress Tracker</h2>
 
-    <p style="margin-bottom: 4px;">Overall Progress: <strong>53 / 57 tasks</strong></p>
-    <div class="progress-bar"><div class="fill" style="width: 93%"></div></div>
+    <p style="margin-bottom: 4px;">Overall Progress: <strong>60 / 64 tasks</strong></p>
+    <div class="progress-bar"><div class="fill" style="width: 94%"></div></div>
 
     <h3>Completed</h3>
     <div class="timeline">
@@ -2111,14 +2243,22 @@ conn.enable()   # RADIUS lands at priv 1, must enable for priv 15</pre>
         <div class="timeline-item done">PIM multicast underlay configured (RP on Border, sparse-mode on Lo0+Gi1/0/1)</div>
         <div class="timeline-item done">Cross-edge VXLAN data plane verified working (Windows0 &harr; Windows1 ping)</div>
         <div class="timeline-item done">CSR1000V added to CML &mdash; SXP from ISE, inline SGT tagging on G2/G3</div>
+        <div class="timeline-item done">CSR100v_Static added (192.168.244.17) with 3 loopback interfaces (10.1.1.1-3)</div>
+        <div class="timeline-item done">ISE SGTs created: SGT_101 (101), SGT_102 (102), SGT_103 (103)</div>
+        <div class="timeline-item done">ISE SXP static bindings: 10.1.1.1&rarr;101, 10.1.1.2&rarr;102, 10.1.1.3&rarr;103 (VPN=default)</div>
+        <div class="timeline-item done">Border L3 Handoff + LISP route-import for external routes (10.1.1.0/29, 10.1.200.0/24)</div>
+        <div class="timeline-item done">SXP VPN architecture resolved: CSR_SXP in default VPN, SDA switches in Corp_VN</div>
+        <div class="timeline-item done">SGACL configured on CSR_SXP: BLOCK_ICMP (SGT 5&rarr;101), PERMIT_ALL (SGT 5&rarr;102)</div>
+        <div class="timeline-item done">SGACL tested and verified &mdash; ICMP blocked for SGT 101, permitted for SGT 102/103</div>
+        <div class="timeline-item done">Credential cleanup: all scripts use centralized creds.py, .gitignore updated</div>
     </div>
 
     <h3>Remaining</h3>
     <div class="timeline">
-        <div class="timeline-item pending">Configure SGT-based ACLs (SGACL) on CSR router</div>
-        <div class="timeline-item pending">Fix CSR inline SGT per-flow (need cts sgt-caching or newer IOS-XE)</div>
         <div class="timeline-item pending">Add Versa FlexVNF and verify IP-SGT propagation end-to-end</div>
         <div class="timeline-item pending">End-to-end SGT propagation test: Fabric &rarr; CSR &rarr; Versa</div>
+        <div class="timeline-item pending">ISE VN mapping: dynamic RADIUS bindings use DEFAULT_VN (ISE limitation)</div>
+        <div class="timeline-item pending">TACACS+ shell profile &mdash; set privilege level 15 in ISE Device Admin</div>
     </div>
 </div>
 
