@@ -1825,9 +1825,73 @@ route-map MATCH_DC_ROUTE permit 20
     <h2>pxGrid 2.0 Testing</h2>
     <p>pxGrid enables external security platforms (firewalls, NAC, SIEM) to consume ISE session and SGT data in real-time. Tested using a Python REST + WebSocket client.</p>
 
-    <h3>pxGrid Architecture</h3>
+    <h3>pxGrid 1.0 vs pxGrid 2.0</h3>
     <div class="card">
-        <p><strong>pxGrid 2.0</strong> (REST + WebSocket/STOMP) is the only version available in ISE 3.0+. pxGrid 1.0 (XMPP-based) was removed in ISE 3.0.</p>
+        <p>Cisco ISE has gone through two major pxGrid versions. Understanding the differences is critical for integration planning &mdash; especially for vendors considering pxGrid support.</p>
+    </div>
+    <table>
+        <tr><th>Feature</th><th>pxGrid 1.0</th><th>pxGrid 2.0</th></tr>
+        <tr><td><strong>Transport Protocol</strong></td><td>XMPP (Extensible Messaging and Presence Protocol)</td><td>REST (HTTPS) + WebSocket (STOMP)</td></tr>
+        <tr><td><strong>Messaging</strong></td><td>XMPP Pub/Sub (XEP-0060)</td><td>STOMP 1.2 over WebSocket</td></tr>
+        <tr><td><strong>Port</strong></td><td>5222 (XMPP)</td><td>8910 (HTTPS + WSS)</td></tr>
+        <tr><td><strong>Authentication</strong></td><td>Certificate-based only (mutual TLS)</td><td>Certificate or Password-based</td></tr>
+        <tr><td><strong>Data Query (Pull)</strong></td><td>XMPP IQ stanzas (custom XML)</td><td>REST POST (JSON payloads)</td></tr>
+        <tr><td><strong>Real-time Push</strong></td><td>XMPP PubSub topics</td><td>WebSocket STOMP subscriptions</td></tr>
+        <tr><td><strong>Data Format</strong></td><td>XML</td><td>JSON</td></tr>
+        <tr><td><strong>Client Libraries</strong></td><td>Requires XMPP library (Smack, SleekXMPP)</td><td>Standard HTTP + WebSocket libraries</td></tr>
+        <tr><td><strong>Complexity</strong></td><td>High &mdash; XMPP is complex, custom stanzas</td><td>Low &mdash; simple REST + standard STOMP</td></tr>
+        <tr><td><strong>ISE 2.x</strong></td><td><span class="badge badge-green">Supported</span></td><td><span class="badge badge-green">Supported</span> (added in ISE 2.4)</td></tr>
+        <tr><td><strong>ISE 3.0+</strong></td><td><span class="badge badge-red">REMOVED</span></td><td><span class="badge badge-green">Only Option</span></td></tr>
+        <tr><td><strong>ISE 3.5 (this lab)</strong></td><td><span class="badge badge-red">Not Available</span></td><td><span class="badge badge-green">Active / Tested</span></td></tr>
+    </table>
+
+    <h3>pxGrid Version Timeline</h3>
+    <div class="card">
+        <pre>ISE 2.0-2.3   pxGrid 1.0 only (XMPP)
+ISE 2.4       pxGrid 2.0 introduced (REST+WS) alongside 1.0
+ISE 2.6-2.7   Both versions supported, 2.0 recommended
+ISE 3.0       pxGrid 1.0 (XMPP) REMOVED permanently
+ISE 3.1-3.5   pxGrid 2.0 only (REST + WebSocket/STOMP)</pre>
+        <p style="margin-top: 8px;"><strong>Key takeaway:</strong> Any new pxGrid integration must target pxGrid 2.0. The XMPP-based 1.0 no longer exists in modern ISE. This simplifies development significantly &mdash; standard REST/JSON for queries, standard WebSocket/STOMP for real-time events.</p>
+    </div>
+
+    <h3>pxGrid 2.0 Integration Model</h3>
+    <div class="card">
+        <pre>                          ISE 3.5
+                    (pxGrid Controller, port 8910)
+                   /            |            \
+              REST Pull    WebSocket Push    Control API
+              (on-demand)  (real-time)       (account mgmt)
+                 |              |                |
+         getSessions    STOMP subscribe    AccountCreate
+         getBindings    /topic/session     AccountActivate
+         getSGTs        /topic/sxp         AccessSecret
+         getEgress      /topic/trustsec    ServiceLookup
+                 \              |                /
+                  \             |               /
+              +-----------------------------------+
+              |     pxGrid Consumer (Client)      |
+              |  - Firewall (Palo Alto, Versa)    |
+              |  - SIEM (Splunk, QRadar)          |
+              |  - NAC (Forescout, ClearPass)     |
+              |  - Custom (Python, Java, Go)      |
+              +-----------------------------------+</pre>
+    </div>
+
+    <h3>Why pxGrid 2.0 is Better for Vendors</h3>
+    <div class="card">
+        <table>
+            <tr><th>Aspect</th><th>pxGrid 1.0 (XMPP)</th><th>pxGrid 2.0 (REST+WS)</th></tr>
+            <tr><td>Development effort</td><td>High &mdash; need XMPP library, understand stanzas, custom XML parsing</td><td>Low &mdash; any HTTP client + JSON parser works</td></tr>
+            <tr><td>Testing</td><td>Hard &mdash; XMPP debugging is complex</td><td>Easy &mdash; curl/Postman for REST, browser DevTools for WebSocket</td></tr>
+            <tr><td>Certificate handling</td><td>Mandatory mutual TLS (complex PKI setup)</td><td>Password auth available (simpler for labs/PoC)</td></tr>
+            <tr><td>Firewall friendly</td><td>XMPP port 5222 often blocked</td><td>HTTPS port 8910 (standard web traffic)</td></tr>
+            <tr><td>Language support</td><td>Limited XMPP libraries (Java, Python)</td><td>Universal &mdash; every language has HTTP + WebSocket support</td></tr>
+        </table>
+    </div>
+
+    <h3>pxGrid 2.0 Architecture (this lab)</h3>
+    <div class="card">
         <table>
             <tr><th>Component</th><th>Protocol</th><th>Port</th><th>Purpose</th></tr>
             <tr><td>Control API</td><td>HTTPS REST</td><td>8910</td><td>Account management, service lookup, access secrets</td></tr>
