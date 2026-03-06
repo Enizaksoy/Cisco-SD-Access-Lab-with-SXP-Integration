@@ -699,7 +699,7 @@ pre {
     <div class="card">
         <table>
             <tr><th>Component</th><th>Value</th><th>Details</th></tr>
-            <tr><td>Platform</td><td>VMware VM</td><td>DN-SW-APL (Cisco Catalyst Center Appliance)</td></tr>
+            <tr><td>Platform</td><td>VM on ESXi</td><td>Cisco Catalyst Center Virtual Appliance</td></tr>
             <tr><td>Version</td><td>2.3.7.10</td><td>Single-node deployment</td></tr>
             <tr><td>IP</td><td>192.168.11.254</td><td>GW: 192.168.10.4 | DNS: 8.8.8.8 | NTP: 192.168.20.4</td></tr>
             <tr><td>CPU Usage</td><td><span class="badge badge-orange">27.6%</span></td><td>Kubernetes (Maglev) platform with 76+ services</td></tr>
@@ -728,7 +728,7 @@ pre {
     <h3>Lab Device Resources</h3>
     <div class="card">
         <table>
-            <tr><th>Device</th><th>Role</th><th>CPU Usage</th><th>Memory</th><th>Disk</th><th>Health</th></tr>
+            <tr><th>Device</th><th>Role</th><th>CPU Usage</th><th>Memory</th><th>VM Allocation</th><th>Health</th></tr>
             <tr style="background: rgba(59, 130, 246, 0.05);">
                 <td><span class="badge badge-blue">SDA-Border</span></td>
                 <td>Border + OSPF</td>
@@ -766,7 +766,7 @@ pre {
                 <td>SD-Access Controller</td>
                 <td><span class="badge badge-green">27.6%</span></td>
                 <td>56.5% utilized</td>
-                <td>Dedicated appliance</td>
+                <td>VM on ESXi</td>
                 <td><span class="badge badge-green">Healthy</span></td>
             </tr>
             <tr>
@@ -774,14 +774,14 @@ pre {
                 <td>Policy / RADIUS / SXP</td>
                 <td><span class="badge badge-green">~1%</span></td>
                 <td>11.6 / 64 GB (18%)</td>
-                <td>/opt: 66 / 253 GB (28%)</td>
+                <td>VM on ESXi</td>
                 <td><span class="badge badge-green">Running</span></td>
             </tr>
         </table>
         <p style="color: var(--text-secondary); font-size: 0.8em; margin-top: 8px;">
             <strong>Cat9Kv UADP</strong> requires minimum 18 GB RAM per node. Total fabric allocation: 32 vCPU + 72 GB RAM for 4 switches.
             The ~48% CPU and ~68% memory usage is <strong>normal baseline</strong> for Cat9Kv &mdash; IOS-XE runs multiple Linux processes (IOSd, BinOS, FED, etc.)<br>
-            <strong>Catalyst Center</strong> (192.168.11.254) &mdash; dedicated physical appliance running Kubernetes/Maglev platform, v2.3.7.7. Manages all 4 Cat9Kv switches.<br>
+            <strong>Catalyst Center</strong> (192.168.11.254) &mdash; VM on ESXi running Kubernetes/Maglev platform, v2.3.7.7. Manages all 4 Cat9Kv switches.<br>
             <strong>ISE 3.5</strong> (192.168.11.250) &mdash; VM on ESXi (192.168.50.32), 64 GB RAM allocated. Provides 802.1X, SGT assignment, and SXP propagation to SDA fabric.
         </p>
     </div>
